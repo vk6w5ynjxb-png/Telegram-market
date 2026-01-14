@@ -1,137 +1,16 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بازار آنلاین</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --main: #a62626; --bg: #f9f9f9; --text: #333; --card-bg: #fff; }
-        body { font-family: Tahoma, sans-serif; background: var(--bg); color: var(--text); padding: 0; margin: 0; padding-bottom: 80px; }
-        
-        .page { display: none; padding: 15px; }
-        .page.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* کارت منوی اصلی */
-        .menu-card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-        .menu-card i { color: var(--main); font-size: 20px; }
-
-        /* لیست آگهی‌ها */
-        .ad-item { background: var(--card-bg); border-radius: 10px; padding: 10px; margin-bottom: 10px; display: flex; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; }
-        .ad-img { width: 90px; height: 90px; border-radius: 8px; object-fit: cover; background: #eee; }
-        .ad-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        .ad-title { font-weight: bold; font-size: 14px; margin-bottom: 5px; }
-        .ad-price { color: var(--main); font-size: 13px; font-weight: bold; }
-        .ad-loc { font-size: 11px; color: #888; }
-
-        /* صفحه جزئیات آگهی */
-        .detail-img { width: 100%; height: 250px; object-fit: cover; background: #ddd; }
-        .detail-content { padding: 20px; background: var(--card-bg); border-radius: 20px 20px 0 0; margin-top: -20px; position: relative; }
-        .detail-price { color: var(--main); font-size: 18px; font-weight: bold; margin: 10px 0; }
-        
-        /* دکمه شناور پایین */
-        .fab { position: fixed; bottom: 20px; left: 20px; width: 56px; height: 56px; background: var(--main); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 10px rgba(166, 38, 38, 0.4); cursor: pointer; z-index: 100; }
-
-        /* فرم‌ها */
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; background: #fff; }
-        .submit-btn { width: 100%; padding: 15px; background: var(--main); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; margin-top: 10px; }
-        .submit-btn:disabled { background: #ccc; }
-        
-        /* آپلود عکس */
-        .upload-box { border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 10px; background: white; margin-bottom: 15px; cursor: pointer; }
-        .upload-box.uploaded { border-color: green; background: #e8f5e9; }
-    </style>
-</head>
-<body>
-
-    <div id="page-home" class="page active">
-        <h2 style="padding: 0 10px;">بازارچه</h2>
-        
-        <div class="menu-card" onclick="loadAds('estate', 'ایران')">
-            <span>🏠 املاک ایران</span> <i class="fa fa-chevron-left"></i>
-        </div>
-        <div class="menu-card" onclick="loadAds('estate', 'افغانستان')">
-            <span>🏠 املاک افغانستان</span> <i class="fa fa-chevron-left"></i>
-        </div>
-        <div class="menu-card" onclick="loadAds('goods', 'ایران')">
-            <span>🛍 اجناس ایران</span> <i class="fa fa-chevron-left"></i>
-        </div>
-        <div class="menu-card" onclick="loadAds('goods', 'افغانستان')">
-            <span>🛍 اجناس افغانستان</span> <i class="fa fa-chevron-left"></i>
-        </div>
-
-        <div class="fab" onclick="showPage('page-post')">
-            <i class="fa fa-plus"></i>
-        </div>
-    </div>
-
-    <div id="page-list" class="page">
-        <div style="display:flex; align-items:center; margin-bottom:15px;">
-            <i class="fa fa-arrow-right" onclick="showPage('page-home')" style="padding:10px; cursor:pointer;"></i>
-            <h3 style="margin:0; flex:1; text-align:center;" id="list-title">آگهی‌ها</h3>
-            <div style="width:30px;"></div>
-        </div>
-        <div id="ads-container"></div>
-    </div>
-
-    <div id="page-detail" class="page" style="padding:0;">
-        <img id="d-img" class="detail-img">
-        <div class="detail-content">
-            <h2 id="d-title">عنوان</h2>
-            <div class="detail-price" id="d-price">قیمت</div>
-            <div style="color:#666; font-size:13px; margin-bottom:15px;" id="d-loc">📍 لوکیشن</div>
-            <hr style="border:0; border-top:1px solid #eee;">
-            <p id="d-desc" style="line-height:1.6; color:#444;">توضیحات...</p>
-            <button class="submit-btn" onclick="showPage('page-list')">بازگشت</button>
-        </div>
-    </div>
-
-    <div id="page-post" class="page">
-        <h3>📝 ثبت آگهی جدید</h3>
-        
-        <div class="upload-box" onclick="document.getElementById('file-input').click()" id="upload-div">
-            <i class="fa fa-camera" style="font-size:30px; color:#aaa;"></i><br>
-            <span id="upload-text">افزودن عکس (اجباری نیست)</span>
-        </div>
-        <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFile(this)">
-
-        <select id="country">
-            <option value="ایران">ایران</option>
-            <option value="افغانستان">افغانستان</option>
-        </select>
-        <input type="text" id="city" placeholder="شهر">
-        <input type="text" id="full-addr" placeholder="آدرس دقیق">
-        
-        <select id="cat">
-            <option value="estate">املاک</option>
-            <option value="goods">اجناس</option>
-        </select>
-
-        <input type="text" id="title" placeholder="عنوان آگهی">
-        <input type="number" id="price" placeholder="قیمت">
-        <textarea id="desc" rows="3" placeholder="توضیحات..."></textarea>
-        
-        <button class="submit-btn" id="btn-submit" onclick="submitAd()">ثبت نهایی</button>
-        <button class="submit-btn" style="background:#ddd; color:#333; margin-top:5px;" onclick="showPage('page-home')">انصراف</button>
-    </div>
-
-    <script>
+<script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // ✅ کلید شما اینجا قرار گرفت
-        const IMGBB_API_KEY = "cdf0aa3b285e7f59c86497ebeca1ef93"; 
+        // 🔴 کلید API خود را اینجا بگذارید
+        const IMGBB_API_KEY = "YOUR_API_KEY"; 
 
         let uploadedImageUrl = "";
 
-        // داده‌های نمونه برای نمایش در مینی‌اپ
+        // آگهی‌های پیش‌فرض (تست)
         const SAMPLE_ADS = [
-            { id: 1, title: "آپارتمان مدرن", price: "5,000,000,000", city: "تهران", cat: "estate", country: "ایران", img: "https://picsum.photos/300/200", desc: "فول امکانات" },
-            { id: 2, title: "آیفون 13", price: "40,000,000", city: "مشهد", cat: "goods", country: "ایران", img: "https://picsum.photos/300/201", desc: "سالم" },
-            { id: 3, title: "خانه ویلایی", price: "3,000,000", city: "هرات", cat: "estate", country: "افغانستان", img: "https://picsum.photos/300/202", desc: "قدیمی ساز" },
-            { id: 4, title: "لپ‌تاپ HP", price: "12,000", city: "کابل", cat: "goods", country: "افغانستان", img: "https://picsum.photos/300/203", desc: "کارکرده تمیز" }
+            { id: 1, title: "آپارتمان 100 متری", price: "5,000,000,000", city: "تهران", cat: "estate", country: "ایران", img: "https://picsum.photos/300/200", desc: "تست" },
+            { id: 2, title: "آیفون 13", price: "40,000,000", city: "مشهد", cat: "goods", country: "ایران", img: "https://picsum.photos/300/201", desc: "تست" }
         ];
 
         function showPage(id) {
@@ -140,37 +19,62 @@
             window.scrollTo(0,0);
         }
 
+        // --- تابع جدید نمایش آگهی‌ها ---
         function loadAds(cat, country) {
-            document.getElementById('list-title').innerText = `${cat} - ${country}`;
+            document.getElementById('list-title').innerText = `${cat === 'estate' ? 'املاک' : 'اجناس'} - ${country}`;
             const container = document.getElementById('ads-container');
             container.innerHTML = "";
-            
-            const filtered = SAMPLE_ADS.filter(ad => ad.cat === cat && ad.country === country);
-            
-            if(filtered.length === 0) container.innerHTML = "<p style='text-align:center;'>آگهی موجود نیست</p>";
 
-            filtered.forEach(ad => {
+            // 1. خواندن آگهی‌های ذخیره شده توسط شما (از حافظه گوشی)
+            const mySavedAds = JSON.parse(localStorage.getItem('myAds') || "[]");
+
+            // 2. ترکیب آگهی‌های شما با آگهی‌های نمونه
+            const allAds = [...mySavedAds, ...SAMPLE_ADS];
+
+            // 3. فیلتر کردن
+            const filtered = allAds.filter(ad => ad.cat === cat && ad.country === country);
+
+            if (filtered.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:#888; margin-top:50px;'>هنوز آگهی در این بخش نیست.</p>";
+            }
+
+            // 4. ساخت لیست (آگهی‌های جدیدتر اول بیایند)
+            filtered.reverse().forEach(ad => {
+                // اگر عکس نداشت، یک عکس پیش‌فرض بگذار
+                const imgSrc = ad.img || "https://via.placeholder.com/100?text=No+Image";
+                
                 const item = `
-                    <div class="ad-item" onclick="showDetail(${ad.id})">
-                        <img src="${ad.img}" class="ad-img">
+                    <div class="ad-item" onclick="showDetail('${ad.id}')">
+                        <img src="${imgSrc}" class="ad-img">
                         <div class="ad-info">
                             <div class="ad-title">${ad.title}</div>
-                            <div class="ad-loc">${ad.city}</div>
-                            <div class="ad-price">${ad.price}</div>
+                            <div class="ad-loc"><i class="fa fa-map-marker-alt"></i> ${ad.city}</div>
+                            <div class="ad-price">${parseInt(ad.price).toLocaleString()}</div>
                         </div>
-                    </div>`;
+                    </div>
+                `;
                 container.innerHTML += item;
             });
+
             showPage('page-list');
         }
 
         function showDetail(id) {
-            const ad = SAMPLE_ADS.find(a => a.id === id);
-            document.getElementById('d-img').src = ad.img;
+            // جستجو هم در نمونه‌ها هم در آگهی‌های شخصی
+            const mySavedAds = JSON.parse(localStorage.getItem('myAds') || "[]");
+            const allAds = [...mySavedAds, ...SAMPLE_ADS];
+            
+            // پیدا کردن آگهی (توجه: id ممکن است عدد یا رشته باشد، پس == استفاده میکنیم نه ===)
+            const ad = allAds.find(a => a.id == id);
+            
+            if (!ad) return;
+
+            document.getElementById('d-img').src = ad.img || "https://via.placeholder.com/300?text=No+Image";
             document.getElementById('d-title').innerText = ad.title;
-            document.getElementById('d-price').innerText = ad.price;
-            document.getElementById('d-loc').innerText = ad.city;
+            document.getElementById('d-price').innerText = parseInt(ad.price).toLocaleString();
+            document.getElementById('d-loc').innerText = `📍 ${ad.city} (${ad.country})`;
             document.getElementById('d-desc').innerText = ad.desc;
+
             showPage('page-detail');
         }
 
@@ -180,11 +84,7 @@
 
             const div = document.getElementById('upload-div');
             const txt = document.getElementById('upload-text');
-            const btn = document.getElementById('btn-submit');
-            
-            txt.innerText = "⏳ در حال آپلود...";
-            btn.disabled = true;
-            btn.innerText = "لطفا صبر کنید...";
+            txt.innerText = "⏳ صبر کنید...";
             
             const formData = new FormData();
             formData.append("image", file);
@@ -199,37 +99,57 @@
                     uploadedImageUrl = data.data.url;
                     div.classList.add('uploaded');
                     div.innerHTML = `<img src="${uploadedImageUrl}" style="width:100%; height:100px; object-fit:cover; border-radius:8px;">`;
-                    btn.disabled = false;
-                    btn.innerText = "ثبت نهایی";
                 } else {
-                    alert("خطا: " + data.error.message);
-                    btn.disabled = false;
+                    alert("خطا در آپلود عکس");
                 }
             })
-            .catch(err => {
-                alert("خطای اینترنت");
-                btn.disabled = false;
-            });
+            .catch(err => alert("خطای اینترنت"));
         }
 
         function submitAd() {
             const title = document.getElementById('title').value;
             const price = document.getElementById('price').value;
+            const city = document.getElementById('city').value;
+            const country = document.getElementById('country').value;
+            const cat = document.getElementById('cat').value;
+            const desc = document.getElementById('desc').value;
 
-            if(!title || !price) {
-                tg.showPopup({title:'خطا', message:'عنوان و قیمت الزامی است'});
+            if(!title || !price || !city) {
+                tg.showPopup({title:'خطا', message:'لطفا فیلدها را پر کنید'});
                 return;
             }
 
+            // --- بخش جدید: ذخیره در حافظه گوشی (LocalStorage) ---
+            const newAd = {
+                id: Date.now(), // یک شناسه یکتا بر اساس زمان
+                title: title,
+                price: price,
+                city: city,
+                country: country,
+                cat: cat,
+                desc: desc,
+                img: uploadedImageUrl, // لینک عکسی که آپلود شد
+                address: document.getElementById('full-addr').value
+            };
+
+            // 1. دریافت لیست قبلی
+            const existingAds = JSON.parse(localStorage.getItem('myAds') || "[]");
+            // 2. اضافه کردن آگهی جدید
+            existingAds.push(newAd);
+            // 3. ذخیره مجدد
+            localStorage.setItem('myAds', JSON.stringify(existingAds));
+            // -----------------------------------------------------
+
+            // ارسال به ربات (برای ادمین و دیتابیس)
             const data = {
                 action: "new_post_full",
                 title: title,
                 price: price,
-                city: document.getElementById('city').value,
-                country: document.getElementById('country').value,
-                address: document.getElementById('full-addr').value,
-                desc: document.getElementById('desc').value,
-                cat: document.getElementById('cat').value,
+                city: city,
+                country: country,
+                address: newAd.address,
+                desc: desc,
+                cat: cat,
                 image_url: uploadedImageUrl,
                 details: {},
                 gps: {lat:0, long:0}
@@ -238,5 +158,3 @@
             tg.sendData(JSON.stringify(data));
         }
     </script>
-</body>
-</html>
