@@ -3,153 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>دیوار پیشرفته</title>
+    <title>بازار آنلاین</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --main: #a62626; --bg: #fff; --text: #000; --sec: #f2f2f2; }
-        body { font-family: Tahoma, sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; padding-bottom: 80px; }
+        :root { --main: #a62626; --bg: #f9f9f9; --text: #333; --card-bg: #fff; }
+        body { font-family: Tahoma, sans-serif; background: var(--bg); color: var(--text); padding: 0; margin: 0; padding-bottom: 80px; }
         
-        .page { display: none; }
-        .page.active { display: block; }
+        .page { display: none; padding: 15px; }
+        .page.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .card { background: var(--sec); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #eee; }
-        h3 { margin: 0 0 15px; font-size: 14px; color: var(--main); border-bottom: 2px solid #ddd; display: inline-block; padding-bottom: 5px; }
+        /* کارت منوی اصلی */
+        .menu-card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+        .menu-card i { color: var(--main); font-size: 20px; }
 
-        /* دکمه‌ها */
-        .big-btn { width: 100%; padding: 15px; margin-bottom: 10px; border: none; border-radius: 8px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 15px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-        .submit-btn { width: 100%; padding: 15px; background: var(--main); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; margin-top: 10px; cursor: pointer; }
-        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+        /* لیست آگهی‌ها */
+        .ad-item { background: var(--card-bg); border-radius: 10px; padding: 10px; margin-bottom: 10px; display: flex; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; }
+        .ad-img { width: 90px; height: 90px; border-radius: 8px; object-fit: cover; background: #eee; }
+        .ad-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .ad-title { font-weight: bold; font-size: 14px; margin-bottom: 5px; }
+        .ad-price { color: var(--main); font-size: 13px; font-weight: bold; }
+        .ad-loc { font-size: 11px; color: #888; }
 
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        /* صفحه جزئیات آگهی */
+        .detail-img { width: 100%; height: 250px; object-fit: cover; background: #ddd; }
+        .detail-content { padding: 20px; background: var(--card-bg); border-radius: 20px 20px 0 0; margin-top: -20px; position: relative; }
+        .detail-price { color: var(--main); font-size: 18px; font-weight: bold; margin: 10px 0; }
         
-        /* استایل آپلود عکس */
-        .upload-box { border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 10px; background: white; cursor: pointer; transition: 0.3s; }
+        /* دکمه شناور پایین */
+        .fab { position: fixed; bottom: 20px; left: 20px; width: 56px; height: 56px; background: var(--main); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 10px rgba(166, 38, 38, 0.4); cursor: pointer; z-index: 100; }
+
+        /* فرم‌ها */
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; background: #fff; }
+        .submit-btn { width: 100%; padding: 15px; background: var(--main); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; margin-top: 10px; }
+        .submit-btn:disabled { background: #ccc; }
+        
+        /* آپلود عکس */
+        .upload-box { border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 10px; background: white; margin-bottom: 15px; cursor: pointer; }
         .upload-box.uploaded { border-color: green; background: #e8f5e9; }
-        .upload-box i { font-size: 30px; color: #888; margin-bottom: 10px; }
-        #file-input { display: none; }
-        #upload-status { font-size: 12px; color: #666; margin-top: 5px; }
-
-        .loading { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div id="page-home" class="page active">
-        <div style="text-align: center; margin-bottom: 20px;">
-            <h2 style="color: var(--main);">🛒 بازار آنلاین</h2>
-        </div>
+        <h2 style="padding: 0 10px;">بازارچه</h2>
         
-        <h3>آگهی‌ها</h3>
-        <button class="big-btn" onclick="sendSearch('estate', 'ایران')"><span>🏠 املاک ایران</span> <i class="fa fa-angle-left"></i></button>
-        <button class="big-btn" onclick="sendSearch('estate', 'افغانستان')"><span>🏠 املاک افغانستان</span> <i class="fa fa-angle-left"></i></button>
-        <button class="big-btn" onclick="sendSearch('goods', 'ایران')"><span>🛍 اجناس ایران</span> <i class="fa fa-angle-left"></i></button>
-        <button class="big-btn" onclick="sendSearch('goods', 'افغانستان')"><span>🛍 اجناس افغانستان</span> <i class="fa fa-angle-left"></i></button>
+        <div class="menu-card" onclick="loadAds('estate', 'ایران')">
+            <span>🏠 املاک ایران</span> <i class="fa fa-chevron-left"></i>
+        </div>
+        <div class="menu-card" onclick="loadAds('estate', 'افغانستان')">
+            <span>🏠 املاک افغانستان</span> <i class="fa fa-chevron-left"></i>
+        </div>
+        <div class="menu-card" onclick="loadAds('goods', 'ایران')">
+            <span>🛍 اجناس ایران</span> <i class="fa fa-chevron-left"></i>
+        </div>
+        <div class="menu-card" onclick="loadAds('goods', 'افغانستان')">
+            <span>🛍 اجناس افغانستان</span> <i class="fa fa-chevron-left"></i>
+        </div>
 
-        <h3 style="margin-top: 20px;">ثبت</h3>
-        <button class="big-btn" style="background: var(--main); color: white;" onclick="showPage('page-post')">
-            <span>📝 ثبت آگهی جدید</span> <i class="fa fa-plus-circle"></i>
-        </button>
+        <div class="fab" onclick="showPage('page-post')">
+            <i class="fa fa-plus"></i>
+        </div>
+    </div>
+
+    <div id="page-list" class="page">
+        <div style="display:flex; align-items:center; margin-bottom:15px;">
+            <i class="fa fa-arrow-right" onclick="showPage('page-home')" style="padding:10px; cursor:pointer;"></i>
+            <h3 style="margin:0; flex:1; text-align:center;" id="list-title">آگهی‌ها</h3>
+            <div style="width:30px;"></div>
+        </div>
+        <div id="ads-container"></div>
+    </div>
+
+    <div id="page-detail" class="page" style="padding:0;">
+        <img id="d-img" class="detail-img">
+        <div class="detail-content">
+            <h2 id="d-title">عنوان</h2>
+            <div class="detail-price" id="d-price">قیمت</div>
+            <div style="color:#666; font-size:13px; margin-bottom:15px;" id="d-loc">📍 لوکیشن</div>
+            <hr style="border:0; border-top:1px solid #eee;">
+            <p id="d-desc" style="line-height:1.6; color:#444;">توضیحات...</p>
+            <button class="submit-btn" onclick="showPage('page-list')">بازگشت</button>
+        </div>
     </div>
 
     <div id="page-post" class="page">
-        <div class="card">
-            <h3>📸 تصویر آگهی</h3>
-            <div class="upload-box" onclick="document.getElementById('file-input').click()" id="upload-div">
-                <i class="fa fa-camera"></i><br>
-                <span>برای انتخاب عکس ضربه بزنید</span>
-            </div>
-            <input type="file" id="file-input" accept="image/*" onchange="handleFile(this)">
-            <div id="upload-status">هنوز عکسی انتخاب نشده</div>
+        <h3>📝 ثبت آگهی جدید</h3>
+        
+        <div class="upload-box" onclick="document.getElementById('file-input').click()" id="upload-div">
+            <i class="fa fa-camera" style="font-size:30px; color:#aaa;"></i><br>
+            <span id="upload-text">افزودن عکس (اجباری نیست)</span>
         </div>
+        <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFile(this)">
 
-        <div class="card">
-            <h3>📍 موقعیت</h3>
-            <button class="big-btn" onclick="getLocation()" style="background:#0088cc; color:white; justify-content:center;">
-                <i class="fa fa-map-marker-alt" style="margin-left:5px;"></i> دریافت لوکیشن من
-            </button>
-            <div id="loc-txt" style="font-size:11px; color:green; margin-bottom:10px; text-align:center;"></div>
-            
-            <select id="country">
-                <option value="ایران">ایران</option>
-                <option value="افغانستان">افغانستان</option>
-            </select>
-            <input type="text" id="city" placeholder="شهر (مثلا: تهران)">
-            <input type="text" id="full-addr" placeholder="محله، خیابان، پلاک">
-        </div>
+        <select id="country">
+            <option value="ایران">ایران</option>
+            <option value="افغانستان">افغانستان</option>
+        </select>
+        <input type="text" id="city" placeholder="شهر">
+        <input type="text" id="full-addr" placeholder="آدرس دقیق">
+        
+        <select id="cat">
+            <option value="estate">املاک</option>
+            <option value="goods">اجناس</option>
+        </select>
 
-        <div class="card">
-            <h3>📦 مشخصات</h3>
-            <select id="cat" onchange="toggleForm(this.value)">
-                <option value="estate">املاک</option>
-                <option value="goods">اجناس</option>
-            </select>
-
-            <div id="form-estate">
-                <input type="text" id="est-type" placeholder="نوع ملک (آپارتمان/ویلا)">
-                <input type="number" id="est-area" placeholder="متراژ">
-            </div>
-            <div id="form-goods" style="display:none;">
-                <input type="text" id="g-type" placeholder="نوع کالا (موبایل/لپتاپ)">
-                <select id="g-status"><option>نو</option><option>دست دوم</option></select>
-            </div>
-
-            <input type="text" id="title" placeholder="عنوان آگهی">
-            <input type="number" id="price" placeholder="قیمت (تومان)">
-            <textarea id="desc" rows="3" placeholder="توضیحات..."></textarea>
-        </div>
-
-        <button class="submit-btn" id="btn-submit" onclick="submitAd()">ثبت نهایی آگهی</button>
-        <button class="big-btn" onclick="showPage('page-home')" style="margin-top:10px; text-align:center; justify-content:center; color:#888;">بازگشت</button>
+        <input type="text" id="title" placeholder="عنوان آگهی">
+        <input type="number" id="price" placeholder="قیمت">
+        <textarea id="desc" rows="3" placeholder="توضیحات..."></textarea>
+        
+        <button class="submit-btn" id="btn-submit" onclick="submitAd()">ثبت نهایی</button>
+        <button class="submit-btn" style="background:#ddd; color:#333; margin-top:5px;" onclick="showPage('page-home')">انصراف</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // 🔴🔴🔴 کلید API خود را اینجا بگذارید 🔴🔴🔴
+        // ✅ کلید شما اینجا قرار گرفت
         const IMGBB_API_KEY = "cdf0aa3b285e7f59c86497ebeca1ef93"; 
 
-        let userLoc = { lat: 0, long: 0 };
         let uploadedImageUrl = "";
+
+        // داده‌های نمونه برای نمایش در مینی‌اپ
+        const SAMPLE_ADS = [
+            { id: 1, title: "آپارتمان مدرن", price: "5,000,000,000", city: "تهران", cat: "estate", country: "ایران", img: "https://picsum.photos/300/200", desc: "فول امکانات" },
+            { id: 2, title: "آیفون 13", price: "40,000,000", city: "مشهد", cat: "goods", country: "ایران", img: "https://picsum.photos/300/201", desc: "سالم" },
+            { id: 3, title: "خانه ویلایی", price: "3,000,000", city: "هرات", cat: "estate", country: "افغانستان", img: "https://picsum.photos/300/202", desc: "قدیمی ساز" },
+            { id: 4, title: "لپ‌تاپ HP", price: "12,000", city: "کابل", cat: "goods", country: "افغانستان", img: "https://picsum.photos/300/203", desc: "کارکرده تمیز" }
+        ];
 
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            window.scrollTo(0,0);
         }
 
-        function toggleForm(cat) {
-            document.getElementById('form-estate').style.display = (cat === 'estate') ? 'block' : 'none';
-            document.getElementById('form-goods').style.display = (cat === 'goods') ? 'block' : 'none';
+        function loadAds(cat, country) {
+            document.getElementById('list-title').innerText = `${cat} - ${country}`;
+            const container = document.getElementById('ads-container');
+            container.innerHTML = "";
+            
+            const filtered = SAMPLE_ADS.filter(ad => ad.cat === cat && ad.country === country);
+            
+            if(filtered.length === 0) container.innerHTML = "<p style='text-align:center;'>آگهی موجود نیست</p>";
+
+            filtered.forEach(ad => {
+                const item = `
+                    <div class="ad-item" onclick="showDetail(${ad.id})">
+                        <img src="${ad.img}" class="ad-img">
+                        <div class="ad-info">
+                            <div class="ad-title">${ad.title}</div>
+                            <div class="ad-loc">${ad.city}</div>
+                            <div class="ad-price">${ad.price}</div>
+                        </div>
+                    </div>`;
+                container.innerHTML += item;
+            });
+            showPage('page-list');
         }
 
-        function getLocation() {
-            if(navigator.geolocation) {
-                tg.MainButton.showProgress();
-                navigator.geolocation.getCurrentPosition(p => {
-                    userLoc = { lat: p.coords.latitude, long: p.coords.longitude };
-                    document.getElementById('loc-txt').innerText = "✅ لوکیشن ذخیره شد";
-                    tg.MainButton.hideProgress();
-                }, e => {
-                    alert("خطا در لوکیشن: " + e.message);
-                    tg.MainButton.hideProgress();
-                });
-            }
+        function showDetail(id) {
+            const ad = SAMPLE_ADS.find(a => a.id === id);
+            document.getElementById('d-img').src = ad.img;
+            document.getElementById('d-title').innerText = ad.title;
+            document.getElementById('d-price').innerText = ad.price;
+            document.getElementById('d-loc').innerText = ad.city;
+            document.getElementById('d-desc').innerText = ad.desc;
+            showPage('page-detail');
         }
 
-        // آپلود عکس در ImgBB
         function handleFile(input) {
             const file = input.files[0];
             if (!file) return;
 
-            const status = document.getElementById('upload-status');
             const div = document.getElementById('upload-div');
+            const txt = document.getElementById('upload-text');
+            const btn = document.getElementById('btn-submit');
             
-            status.innerText = "⏳ در حال آپلود... لطفا صبر کنید";
-            status.style.color = "blue";
-            document.getElementById('btn-submit').disabled = true; // غیرفعال کردن دکمه ثبت
-
+            txt.innerText = "⏳ در حال آپلود...";
+            btn.disabled = true;
+            btn.innerText = "لطفا صبر کنید...";
+            
             const formData = new FormData();
             formData.append("image", file);
 
@@ -157,63 +193,49 @@
                 method: "POST",
                 body: formData
             })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    uploadedImageUrl = result.data.url; // لینک مستقیم عکس
-                    status.innerText = "✅ عکس با موفقیت آپلود شد!";
-                    status.style.color = "green";
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    uploadedImageUrl = data.data.url;
                     div.classList.add('uploaded');
                     div.innerHTML = `<img src="${uploadedImageUrl}" style="width:100%; height:100px; object-fit:cover; border-radius:8px;">`;
-                    document.getElementById('btn-submit').disabled = false; // فعال کردن دکمه
+                    btn.disabled = false;
+                    btn.innerText = "ثبت نهایی";
                 } else {
-                    status.innerText = "❌ خطا در آپلود: " + result.error.message;
-                    status.style.color = "red";
+                    alert("خطا: " + data.error.message);
+                    btn.disabled = false;
                 }
             })
-            .catch(error => {
-                status.innerText = "❌ خطای شبکه";
-                console.error(error);
+            .catch(err => {
+                alert("خطای اینترنت");
+                btn.disabled = false;
             });
         }
 
         function submitAd() {
             const title = document.getElementById('title').value;
             const price = document.getElementById('price').value;
-            const city = document.getElementById('city').value;
 
-            if(!title || !price || !city) {
-                tg.showPopup({title: 'خطا', message: 'لطفا عنوان، قیمت و شهر را پر کنید'});
+            if(!title || !price) {
+                tg.showPopup({title:'خطا', message:'عنوان و قیمت الزامی است'});
                 return;
             }
 
-            const cat = document.getElementById('cat').value;
-            let details = {};
-            if(cat === 'estate') {
-                details = { type: document.getElementById('est-type').value, area: document.getElementById('est-area').value };
-            } else {
-                details = { type: document.getElementById('g-type').value, status: document.getElementById('g-status').value };
-            }
-
             const data = {
-                action: "new_post_full", // اکشن جدید
+                action: "new_post_full",
                 title: title,
                 price: price,
-                city: city,
+                city: document.getElementById('city').value,
                 country: document.getElementById('country').value,
                 address: document.getElementById('full-addr').value,
                 desc: document.getElementById('desc').value,
-                cat: cat,
-                details: details,
-                gps: userLoc,
-                image_url: uploadedImageUrl // لینک عکس ارسالی
+                cat: document.getElementById('cat').value,
+                image_url: uploadedImageUrl,
+                details: {},
+                gps: {lat:0, long:0}
             };
 
             tg.sendData(JSON.stringify(data));
-        }
-
-        function sendSearch(cat, country) {
-            tg.sendData(JSON.stringify({ action: "search_ads", category: cat, country: country }));
         }
     </script>
 </body>
