@@ -3,80 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بازارچه عیب‌یابی</title>
+    <title>ثبت آگهی پیشرفته</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: Tahoma, sans-serif; padding: 20px; background-color: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); }
-        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;}
-        button { width: 100%; padding: 15px; background-color: #0088cc; color: white; border: none; border-radius: 8px; font-size: 16px; margin-top: 10px; cursor: pointer; }
-        .error-log { color: red; font-size: 12px; margin-top: 10px; display: none; }
+        body { font-family: Tahoma, sans-serif; background: var(--tg-theme-bg-color, #f5f5f5); color: var(--tg-theme-text-color, #000); padding: 15px; margin: 0; }
+        .card { background: var(--tg-theme-secondary-bg-color, #fff); padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        h3 { margin-top: 0; color: var(--tg-theme-button-color, #3390ec); }
+        
+        label { display: block; margin: 10px 0 5px; font-size: 13px; color: var(--tg-theme-hint-color, #888); }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--tg-theme-button-color, #3390ec); }
+        
+        /* دکمه‌های انتخاب دسته بندی */
+        .cat-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+        .cat-btn { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 10px; text-align: center; cursor: pointer; font-weight: bold; background: var(--tg-theme-bg-color, #fff); }
+        .cat-btn.active { border-color: var(--tg-theme-button-color, #3390ec); background-color: rgba(51, 144, 236, 0.1); color: var(--tg-theme-button-color, #3390ec); }
+        
+        /* مخفی کردن بخش‌ها */
+        .hidden { display: none; }
+        
+        button.submit-btn { width: 100%; padding: 15px; background-color: var(--tg-theme-button-color, #3390ec); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <h3>📝 تست ثبت آگهی</h3>
-    
-    <label>عنوان:</label>
-    <input type="text" id="pTitle" placeholder="نام کالا">
-    
-    <label>قیمت:</label>
-    <input type="tel" id="pPrice" placeholder="قیمت">
-    
-    <label>توضیحات:</label>
-    <textarea id="pDesc" rows="3"></textarea>
+    <div class="card">
+        <h3>📂 انتخاب دسته‌بندی</h3>
+        <div class="cat-selector">
+            <div class="cat-btn active" onclick="selectCat('estate')" id="btn-estate">🏠 املاک</div>
+            <div class="cat-btn" onclick="selectCat('goods')" id="btn-goods">🛍 اجناس</div>
+        </div>
+    </div>
 
-    <button onclick="debugAndSend()">ارسال به ربات (تست)</button>
-    
-    <div id="logArea" class="error-log"></div>
+    <div id="form-estate" class="card">
+        <h3>🏠 مشخصات ملک</h3>
+        <label>نوع ملک:</label>
+        <select id="est-type">
+            <option value="آپارتمان">آپارتمان</option>
+            <option value="خانه ویلایی">خانه ویلایی (مستقل)</option>
+            <option value="زمین/کلنگی">زمین خالی / کلنگی</option>
+            <option value="تجاری/مغازه">تجاری / مغازه</option>
+        </select>
+
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label>متراژ (متر):</label>
+                <input type="number" id="est-area" placeholder="مثلا 120">
+            </div>
+            <div style="flex: 1;">
+                <label>سن بنا (سال):</label>
+                <input type="number" id="est-age" placeholder="مثلا 5">
+            </div>
+        </div>
+        
+        <label>تعداد اتاق:</label>
+        <select id="est-rooms">
+            <option value="0">بدون اتاق</option>
+            <option value="1">یک خوابه</option>
+            <option value="2">دو خوابه</option>
+            <option value="3">سه خوابه و بیشتر</option>
+        </select>
+    </div>
+
+    <div id="form-goods" class="card hidden">
+        <h3>🛍 مشخصات کالا</h3>
+        <label>دسته‌بندی کالا:</label>
+        <select id="g-type">
+            <option value="الکترونیکی">📱 لوازم الکترونیکی (موبایل/لپ‌تاپ)</option>
+            <option value="خانگی">🛋 لوازم خانگی</option>
+            <option value="پوشاک">👕 پوشاک و مد</option>
+            <option value="خودرو">🚗 وسایل نقلیه</option>
+            <option value="سایر">📦 سایر</option>
+        </select>
+
+        <label>وضعیت کالا:</label>
+        <select id="g-status">
+            <option value="نو (آکبند)">نو (آکبند)</option>
+            <option value="در حد نو">دست دوم (در حد نو)</option>
+            <option value="کارکرده">دست دوم (کارکرده)</option>
+            <option value="نیاز به تعمیر">نیاز به تعمیر</option>
+        </select>
+    </div>
+
+    <div class="card">
+        <h3>📝 اطلاعات تکمیلی</h3>
+        <label>عنوان آگهی:</label>
+        <input type="text" id="common-title" placeholder="عنوان کوتاه و جذاب">
+
+        <label>قیمت (تومان):</label>
+        <input type="number" id="common-price" placeholder="مثلا 5000000">
+
+        <label>توضیحات کامل:</label>
+        <textarea id="common-desc" rows="4" placeholder="توضیحات بیشتر در مورد آگهی..."></textarea>
+    </div>
+
+    <button class="submit-btn" onclick="submitData()">ثبت و ارسال برای تایید</button>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand(); // تمام صفحه کردن
+        tg.expand();
+        let currentCat = 'estate';
 
-        function showLog(msg) {
-            const logArea = document.getElementById('logArea');
-            logArea.style.display = 'block';
-            logArea.innerText += msg + "\n";
+        function selectCat(cat) {
+            currentCat = cat;
+            // تغییر استایل دکمه‌ها
+            document.getElementById('btn-estate').classList.toggle('active', cat === 'estate');
+            document.getElementById('btn-goods').classList.toggle('active', cat === 'goods');
+            
+            // نمایش/مخفی کردن فرم‌ها
+            document.getElementById('form-estate').classList.toggle('hidden', cat !== 'estate');
+            document.getElementById('form-goods').classList.toggle('hidden', cat !== 'goods');
         }
 
-        function debugAndSend() {
-            try {
-                // 1. تست خواندن مقادیر
-                const title = document.getElementById('pTitle').value;
-                const price = document.getElementById('pPrice').value;
-                const desc = document.getElementById('pDesc').value;
+        function submitData() {
+            const title = document.getElementById('common-title').value;
+            const price = document.getElementById('common-price').value;
+            const desc = document.getElementById('common-desc').value;
 
-                if (!title || !price) {
-                    tg.showPopup({title: 'خطا', message: 'لطفا فیلدهای خالی را پر کنید'});
-                    return;
-                }
-
-                // 2. نمایش پیام تایید قبل از ارسال (برای اطمینان از کارکرد دکمه)
-                tg.showConfirm(`آیا مطمئنید؟\nارسال: ${title}`, function(ok) {
-                    if (ok) {
-                        // 3. ساخت داده نهایی
-                        const data = JSON.stringify({
-                            action: "new_post",
-                            title: title,
-                            price: price,
-                            description: desc
-                        });
-
-                        // 4. تلاش برای ارسال
-                        try {
-                            tg.sendData(data);
-                        } catch (err) {
-                            showLog("خطا در sendData: " + err);
-                            tg.showPopup({title: 'خطای ارسال', message: String(err)});
-                        }
-                    }
-                });
-
-            } catch (e) {
-                // اگر خطایی در کد جاوااسکریپت باشد اینجا نمایش داده می‌شود
-                showLog("خطای کلی: " + e);
-                tg.showPopup({title: 'خطای کدنویسی', message: String(e)});
+            if(!title || !price) {
+                tg.showPopup({title: 'خطا', message: 'لطفا عنوان و قیمت را وارد کنید'});
+                return;
             }
+
+            let finalData = {
+                action: "new_post",
+                category: currentCat, // estate یا goods
+                title: title,
+                price: price,
+                description: desc,
+                details: {} // جزئیات متغیر
+            };
+
+            // جمع‌آوری اطلاعات بر اساس دسته انتخابی
+            if (currentCat === 'estate') {
+                finalData.details = {
+                    type: document.getElementById('est-type').value,
+                    area: document.getElementById('est-area').value,
+                    age: document.getElementById('est-age').value,
+                    rooms: document.getElementById('est-rooms').value
+                };
+            } else {
+                finalData.details = {
+                    type: document.getElementById('g-type').value,
+                    status: document.getElementById('g-status').value
+                };
+            }
+
+            // ارسال به ربات
+            tg.sendData(JSON.stringify(finalData));
         }
     </script>
 </body>
