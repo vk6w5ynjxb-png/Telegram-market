@@ -4,100 +4,93 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>بازار آنلاین</title>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/6.11.0/telegram-web-app.min.js"></script>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --main: #a62626; --bg: #f9f9f9; --text: #333; --card-bg: #fff; }
-        body { font-family: Tahoma, sans-serif; background: var(--bg); color: var(--text); padding: 0; margin: 0; padding-bottom: 80px; }
+        :root { --main: #2b95ff; --bg: #f5f5f5; --text: #333; --card: #fff; }
+        body { font-family: Tahoma, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; }
         
         .page { display: none; padding: 15px; }
-        .page.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .page.active { display: block; animation: fade 0.3s; }
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 
-        .menu-card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-        .ad-item { background: var(--card-bg); border-radius: 10px; padding: 10px; margin-bottom: 10px; display: flex; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; }
-        .ad-img { width: 90px; height: 90px; border-radius: 8px; object-fit: cover; background: #eee; }
+        .menu-card { background: var(--card); border-radius: 15px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; font-weight: bold; }
+        .ad-item { background: var(--card); border-radius: 12px; padding: 10px; margin-bottom: 10px; display: flex; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .ad-img { width: 100px; height: 100px; border-radius: 8px; object-fit: cover; background: #eee; }
         .ad-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        .ad-title { font-weight: bold; font-size: 14px; margin-bottom: 5px; }
-        .ad-price { color: var(--main); font-size: 13px; font-weight: bold; }
-        .ad-loc { font-size: 11px; color: #888; }
-        .detail-img { width: 100%; height: 250px; object-fit: cover; background: #ddd; }
-        .detail-content { padding: 20px; background: var(--card-bg); border-radius: 20px 20px 0 0; margin-top: -20px; position: relative; }
-        .fab { position: fixed; bottom: 20px; left: 20px; width: 56px; height: 56px; background: var(--main); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 10px rgba(166, 38, 38, 0.4); cursor: pointer; z-index: 100; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; background: #fff; }
-        .submit-btn { width: 100%; padding: 15px; background: var(--main); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; margin-top: 10px; }
-        .upload-box { border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 10px; background: white; margin-bottom: 15px; }
-        .upload-box.uploaded { border-color: green; background: #e8f5e9; }
+        .ad-price { color: var(--main); font-weight: bold; font-size: 15px; }
+        
+        .detail-img { width: 100%; height: 300px; object-fit: cover; }
+        .detail-box { background: var(--card); border-radius: 25px 25px 0 0; margin-top: -30px; position: relative; padding: 25px; min-height: 300px; }
+        
+        .fab { position: fixed; bottom: 20px; left: 20px; width: 60px; height: 60px; background: var(--main); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(43, 149, 255, 0.4); font-size: 24px; cursor: pointer; }
+        
+        input, select, textarea { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 12px; background: #fff; box-sizing: border-box; }
+        .submit-btn { width: 100%; padding: 15px; background: var(--main); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; }
+        .upload-box { border: 2px dashed #ccc; padding: 30px; text-align: center; border-radius: 12px; background: #fff; margin-bottom: 15px; }
+        .upload-box.done { border-color: green; background: #e8f5e9; }
     </style>
 </head>
 <body>
 
     <div id="page-home" class="page active">
-        <h2 style="padding: 0 10px;">بازارچه</h2>
-        <div class="menu-card" onclick="loadAds('estate', 'ایران')"><span>🏠 املاک ایران</span> <i class="fa fa-chevron-left"></i></div>
-        <div class="menu-card" onclick="loadAds('estate', 'افغانستان')"><span>🏠 املاک افغانستان</span> <i class="fa fa-chevron-left"></i></div>
-        <div class="menu-card" onclick="loadAds('goods', 'ایران')"><span>🛍 اجناس ایران</span> <i class="fa fa-chevron-left"></i></div>
-        <div class="menu-card" onclick="loadAds('goods', 'افغانستان')"><span>🛍 اجناس افغانستان</span> <i class="fa fa-chevron-left"></i></div>
+        <h2 style="text-align:center; color: var(--main);">بازارچه بین‌المللی</h2>
+        <div class="menu-card" onclick="loadAds('estate', 'ایران')"><span>🏠 املاک ایران</span> <i class="fa fa-angle-left"></i></div>
+        <div class="menu-card" onclick="loadAds('estate', 'افغانستان')"><span>🏠 املاک افغانستان</span> <i class="fa fa-angle-left"></i></div>
+        <div class="menu-card" onclick="loadAds('goods', 'ایران')"><span>🛍 اجناس ایران</span> <i class="fa fa-angle-left"></i></div>
+        <div class="menu-card" onclick="loadAds('goods', 'افغانستان')"><span>🛍 اجناس افغانستان</span> <i class="fa fa-angle-left"></i></div>
         <div class="fab" onclick="showPage('page-post')"><i class="fa fa-plus"></i></div>
     </div>
 
     <div id="page-list" class="page">
-        <div style="display:flex; align-items:center; margin-bottom:15px;">
-            <i class="fa fa-arrow-right" onclick="showPage('page-home')" style="padding:10px; cursor:pointer;"></i>
-            <h3 style="margin:0; flex:1; text-align:center;" id="list-title">آگهی‌ها</h3>
-            <div style="width:30px;"></div>
+        <div style="display:flex; align-items:center; margin-bottom:20px;">
+            <i class="fa fa-arrow-right" onclick="showPage('page-home')" style="font-size:20px; padding:10px;"></i>
+            <h3 id="list-title" style="flex:1; text-align:center; margin:0;">...</h3>
+            <div style="width:40px;"></div>
         </div>
         <div id="ads-container"></div>
     </div>
 
     <div id="page-detail" class="page" style="padding:0;">
         <img id="d-img" class="detail-img">
-        <div class="detail-content">
-            <h2 id="d-title">عنوان</h2>
-            <div style="color: var(--main); font-weight:bold;" id="d-price">قیمت</div>
-            <div style="color:#666; font-size:13px; margin-bottom:15px;" id="d-loc">📍 لوکیشن</div>
-            <p id="d-desc" style="line-height:1.6; color:#444;">توضیحات...</p>
+        <div class="detail-box">
+            <h2 id="d-title"></h2>
+            <div id="d-price" style="color:var(--main); font-size:20px; font-weight:bold; margin:10px 0;"></div>
+            <div id="d-loc" style="color:#777; margin-bottom:20px;"></div>
+            <p id="d-desc" style="line-height:1.8; color:#444;"></p>
             <button class="submit-btn" onclick="showPage('page-list')">بازگشت</button>
         </div>
     </div>
 
     <div id="page-post" class="page">
-        <h3>📝 ثبت آگهی جدید</h3>
-        <div class="upload-box" onclick="document.getElementById('file-input').click()" id="upload-div">
+        <h3>ثبت آگهی جدید</h3>
+        <div class="upload-box" onclick="document.getElementById('file').click()" id="up-div">
             <i class="fa fa-camera" style="font-size:30px; color:#aaa;"></i><br>
-            <span id="upload-text">افزودن عکس</span>
+            <span id="up-txt">انتخاب عکس</span>
         </div>
-        <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFile(this)">
+        <input type="file" id="file" accept="image/*" style="display:none" onchange="uploadFile(this)">
         <select id="country"><option value="ایران">ایران</option><option value="افغانستان">افغانستان</option></select>
         <input type="text" id="city" placeholder="شهر">
-        <input type="text" id="full-addr" placeholder="آدرس دقیق">
+        <input type="text" id="addr" placeholder="آدرس دقیق">
         <select id="cat"><option value="estate">املاک</option><option value="goods">اجناس</option></select>
         <input type="text" id="title" placeholder="عنوان">
         <input type="number" id="price" placeholder="قیمت">
-        <textarea id="desc" rows="4" placeholder="توضیحات..."></textarea>
-        <button class="submit-btn" id="btn-submit" onclick="submitAd()">ثبت و انتشار</button>
-        <button class="submit-btn" style="background:#ddd; color:#333; margin-top:5px;" onclick="showPage('page-home')">انصراف</button>
+        <textarea id="desc" rows="3" placeholder="توضیحات..."></textarea>
+        <button class="submit-btn" onclick="sendData()">ثبت آگهی</button>
+        <button class="submit-btn" style="background:#eee; color:#333; margin-top:10px;" onclick="showPage('page-home')">انصراف</button>
     </div>
 
     <script>
-        // 🔴 کلید API را اینجا بگذارید
-        const IMGBB_API_KEY = "YOUR_API_KEY"; 
+        // 🔴🔴🔴 اینجا کلید ImgBB خودتان را بگذارید 🔴🔴🔴
+        const IMGBB_KEY = "YOUR_IMGBB_API_KEY"; 
         
-        // اطمینان از لود شدن تلگرام
-        let tg;
-        try {
-            tg = window.Telegram.WebApp;
-            tg.expand();
-        } catch (e) {
-            alert("خطا در اتصال به تلگرام. لطفا اینترنت خود را چک کنید.");
-        }
+        // کلیدهای دیتابیس ابری (پر شده)
+        const BIN_ID = "6967e3d043b1c97be930be0f";
+        const MASTER_KEY = "$2a$10$qkOl1I02u1dd9Juv25BMv.IsrpbnJq2vYlA.XxkmrvcMdd6G/Iv8q";
 
-        let uploadedImageUrl = "";
-        const SAMPLE_ADS = [
-            { id: 1, title: "آپارتمان نمونه", price: "5000000000", city: "تهران", cat: "estate", country: "ایران", img: "https://picsum.photos/300/200", desc: "تست" }
-        ];
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        let imgUrl = "";
 
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -105,83 +98,77 @@
             window.scrollTo(0,0);
         }
 
-        function loadAds(cat, country) {
-            document.getElementById('list-title').innerText = `${cat === 'estate' ? 'املاک' : 'اجناس'} - ${country}`;
-            const container = document.getElementById('ads-container');
-            container.innerHTML = "";
-            const mySavedAds = JSON.parse(localStorage.getItem('myAds') || "[]");
-            const allAds = [...mySavedAds, ...SAMPLE_ADS];
-            const filtered = allAds.filter(ad => ad.cat === cat && ad.country === country);
-
-            if (filtered.length === 0) container.innerHTML = "<p style='text-align:center; color:#888; margin-top:50px;'>آگهی موجود نیست.</p>";
-
-            filtered.reverse().forEach(ad => {
-                const imgSrc = ad.img || "https://via.placeholder.com/100?text=No+Image";
-                container.innerHTML += `
-                    <div class="ad-item" onclick="showDetail('${ad.id}')">
-                        <img src="${imgSrc}" class="ad-img">
-                        <div class="ad-info">
-                            <div class="ad-title">${ad.title}</div>
-                            <div class="ad-loc"><i class="fa fa-map-marker-alt"></i> ${ad.city}</div>
-                            <div class="ad-price">${parseInt(ad.price).toLocaleString()}</div>
-                        </div>
-                    </div>`;
-            });
+        async function loadAds(cat, country) {
+            document.getElementById('list-title').innerText = "در حال بارگیری...";
             showPage('page-list');
+            const box = document.getElementById('ads-container');
+            box.innerHTML = "";
+
+            try {
+                const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': MASTER_KEY }
+                });
+                const data = await res.json();
+                const ads = data.record;
+                const filtered = ads.filter(a => a.cat === cat && a.country === country);
+                document.getElementById('list-title').innerText = `${cat==='estate'?'املاک':'اجناس'} - ${country}`;
+
+                if(filtered.length === 0) box.innerHTML = "<p style='text-align:center; color:#999; margin-top:50px;'>آگهی موجود نیست</p>";
+
+                filtered.reverse().forEach(ad => {
+                    const pic = ad.img || "https://via.placeholder.com/150";
+                    box.innerHTML += `
+                        <div class="ad-item" onclick="detail('${ad.title}', '${ad.price}', '${pic}', '${ad.city}', '${ad.desc}')">
+                            <img src="${pic}" class="ad-img">
+                            <div class="ad-info">
+                                <div>${ad.title}</div>
+                                <div style="font-size:12px; color:#777;">📍 ${ad.city}</div>
+                                <div class="ad-price">${parseInt(ad.price).toLocaleString()}</div>
+                            </div>
+                        </div>`;
+                });
+            } catch(e) { alert("خطا در اتصال: " + e); }
         }
 
-        function showDetail(id) {
-            const mySavedAds = JSON.parse(localStorage.getItem('myAds') || "[]");
-            const allAds = [...mySavedAds, ...SAMPLE_ADS];
-            const ad = allAds.find(a => a.id == id);
-            if (!ad) return;
-            document.getElementById('d-img').src = ad.img || "";
-            document.getElementById('d-title').innerText = ad.title;
-            document.getElementById('d-price').innerText = parseInt(ad.price).toLocaleString();
-            document.getElementById('d-loc').innerText = `📍 ${ad.city} (${ad.country})`;
-            document.getElementById('d-desc').innerText = ad.desc;
+        function detail(t, p, i, c, d) {
+            document.getElementById('d-img').src = i;
+            document.getElementById('d-title').innerText = t;
+            document.getElementById('d-price').innerText = parseInt(p).toLocaleString();
+            document.getElementById('d-loc').innerText = `📍 ${c}`;
+            document.getElementById('d-desc').innerText = d;
             showPage('page-detail');
         }
 
-        function handleFile(input) {
-            const file = input.files[0];
-            if (!file) return;
-            document.getElementById('upload-text').innerText = "⏳ ...";
-            const formData = new FormData();
-            formData.append("image", file);
-            fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    uploadedImageUrl = data.data.url;
-                    document.getElementById('upload-div').classList.add('uploaded');
-                    document.getElementById('upload-div').innerHTML = `<img src="${uploadedImageUrl}" style="width:100%; height:100px; object-fit:cover; border-radius:8px;">`;
-                } else alert("خطا در آپلود");
-            }).catch(e => alert("خطای اینترنت"));
+        function uploadFile(inp) {
+            const file = inp.files[0];
+            if(!file) return;
+            document.getElementById('up-txt').innerText = "⏳ ...";
+            const fd = new FormData();
+            fd.append("image", file);
+            fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: fd })
+            .then(r => r.json()).then(d => {
+                if(d.success) {
+                    imgUrl = d.data.url;
+                    document.getElementById('up-div').classList.add('done');
+                    document.getElementById('up-div').innerHTML = `<img src="${imgUrl}" style="width:100%; height:80px; object-fit:cover; border-radius:10px;">`;
+                }
+            });
         }
 
-        function submitAd() {
+        function sendData() {
             const title = document.getElementById('title').value;
             const price = document.getElementById('price').value;
-            if(!title || !price) { tg.showPopup({title:'خطا', message:'عنوان و قیمت الزامی است'}); return; }
-
-            const newAd = {
-                id: Date.now(),
-                title: title, price: price, city: document.getElementById('city').value,
-                country: document.getElementById('country').value, cat: document.getElementById('cat').value,
-                desc: document.getElementById('desc').value, img: uploadedImageUrl,
-                address: document.getElementById('full-addr').value
-            };
-
-            const existingAds = JSON.parse(localStorage.getItem('myAds') || "[]");
-            existingAds.push(newAd);
-            localStorage.setItem('myAds', JSON.stringify(existingAds));
+            if(!title || !price) { tg.showPopup({title:'خطا', message:'اطلاعات ناقص است'}); return; }
 
             const data = {
                 action: "new_post_full",
-                title: title, price: price, city: newAd.city, country: newAd.country,
-                address: newAd.address, desc: newAd.desc, cat: newAd.cat,
-                image_url: uploadedImageUrl, details: {}, gps: {lat:0, long:0}
+                title: title, price: price,
+                city: document.getElementById('city').value,
+                country: document.getElementById('country').value,
+                address: document.getElementById('addr').value,
+                cat: document.getElementById('cat').value,
+                desc: document.getElementById('desc').value,
+                image_url: imgUrl, details: {}, gps: {lat:0, long:0}
             };
             tg.sendData(JSON.stringify(data));
         }
