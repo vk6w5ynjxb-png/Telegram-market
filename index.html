@@ -1,79 +1,83 @@
-import logging
-import json
-import sqlite3
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>بازارچه عیب‌یابی</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: Tahoma, sans-serif; padding: 20px; background-color: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); }
+        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;}
+        button { width: 100%; padding: 15px; background-color: #0088cc; color: white; border: none; border-radius: 8px; font-size: 16px; margin-top: 10px; cursor: pointer; }
+        .error-log { color: red; font-size: 12px; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
 
-# تنظیمات لاگ برای دیدن جزئیات بیشتر
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+    <h3>📝 تست ثبت آگهی</h3>
+    
+    <label>عنوان:</label>
+    <input type="text" id="pTitle" placeholder="نام کالا">
+    
+    <label>قیمت:</label>
+    <input type="tel" id="pPrice" placeholder="قیمت">
+    
+    <label>توضیحات:</label>
+    <textarea id="pDesc" rows="3"></textarea>
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # حتما ?v=3 را تغییر دهید تا تلگرام مجبور شود نسخه جدید را بگیرد
-    web_app_url = "https://vk6w5ynjxb-png.github.io/Telegram-market/index.html?v=3" 
+    <button onclick="debugAndSend()">ارسال به ربات (تست)</button>
     
-    keyboard = [
-        [KeyboardButton("📱 ورود به بازارچه (تست)", web_app=WebAppInfo(url=web_app_url))]
-    ]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    
-    await update.message.reply_text(
-        "روی دکمه زیر بزنید و آگهی را تست کنید:",
-        reply_markup=reply_markup
-    )
+    <div id="logArea" class="error-log"></div>
 
-# این تابع مثل جاروبرقی همه پیام‌ها را می‌گیرد
-async def catch_all_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print("\n🔔 >>> یک چیزی به ربات رسید! بررسی محتوا...")
-    
-    msg = update.effective_message
-    
-    # بررسی می‌کنیم آیا داده وب‌اپلیکیشن داخل پیام هست؟
-    if msg.web_app_data:
-        print("🎉 تبریک! داده وب‌اپلیکیشن دریافت شد!")
-        raw_data = msg.web_app_data.data
-        print(f"📦 محتوا: {raw_data}")
-        
-        # تلاش برای پردازش و ذخیره
-        try:
-            data = json.loads(raw_data)
-            await msg.reply_text(f"✅ دریافت شد:\n{data['title']} - {data['price']}")
-            
-            # ذخیره در دیتابیس
-            conn = sqlite3.connect('market.db')
-            c = conn.cursor()
-            # ساخت جدول اگر نبود
-            c.execute('''CREATE TABLE IF NOT EXISTS ads
-                         (user_id INTEGER, title TEXT, price TEXT, description TEXT)''')
-            
-            c.execute("INSERT INTO ads VALUES (?, ?, ?, ?)", 
-                      (update.effective_user.id, data['title'], data['price'], data['description']))
-            conn.commit()
-            conn.close()
-            print("💾 در دیتابیس ذخیره شد.")
-            
-        except Exception as e:
-            print(f"❌ خطا در خواندن جیسون: {e}")
-    else:
-        print("⚠️ پیامی رسید ولی داده وب‌اپلیکیشن نبود.")
-        print(f"نوع پیام: {msg}")
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // تمام صفحه کردن
 
-def main():
-    # توکن خود را اینجا بگذارید
-    TOKEN = "YOUR_BOT_TOKEN" 
-    
-    # ساخت ربات
-    app = Application.builder().token(TOKEN).job_queue(None).build()
-    
-    app.add_handler(CommandHandler("start", start))
-    
-    # نکته کلیدی: استفاده از filters.ALL برای گرفتن همه چیز
-    app.add_handler(MessageHandler(filters.ALL, catch_all_handler))
-    
-    print("---------------------------------------")
-    print("👀 ربات در حالت شنود کامل است (جاروبرقی فعال شد)")
-    print("---------------------------------------")
-    
-    app.run_polling()
+        function showLog(msg) {
+            const logArea = document.getElementById('logArea');
+            logArea.style.display = 'block';
+            logArea.innerText += msg + "\n";
+        }
 
-if __name__ == '__main__':
-    main()
+        function debugAndSend() {
+            try {
+                // 1. تست خواندن مقادیر
+                const title = document.getElementById('pTitle').value;
+                const price = document.getElementById('pPrice').value;
+                const desc = document.getElementById('pDesc').value;
+
+                if (!title || !price) {
+                    tg.showPopup({title: 'خطا', message: 'لطفا فیلدهای خالی را پر کنید'});
+                    return;
+                }
+
+                // 2. نمایش پیام تایید قبل از ارسال (برای اطمینان از کارکرد دکمه)
+                tg.showConfirm(`آیا مطمئنید؟\nارسال: ${title}`, function(ok) {
+                    if (ok) {
+                        // 3. ساخت داده نهایی
+                        const data = JSON.stringify({
+                            action: "new_post",
+                            title: title,
+                            price: price,
+                            description: desc
+                        });
+
+                        // 4. تلاش برای ارسال
+                        try {
+                            tg.sendData(data);
+                        } catch (err) {
+                            showLog("خطا در sendData: " + err);
+                            tg.showPopup({title: 'خطای ارسال', message: String(err)});
+                        }
+                    }
+                });
+
+            } catch (e) {
+                // اگر خطایی در کد جاوااسکریپت باشد اینجا نمایش داده می‌شود
+                showLog("خطای کلی: " + e);
+                tg.showPopup({title: 'خطای کدنویسی', message: String(e)});
+            }
+        }
+    </script>
+</body>
+</html>
