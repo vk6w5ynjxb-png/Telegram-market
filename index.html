@@ -3,165 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بازارچه کامل</title>
+    <title>بازارچه بین‌المللی</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --main-color: #3390ec; --bg: var(--tg-theme-bg-color, #fff); --text: var(--tg-theme-text-color, #000); --sec-bg: var(--tg-theme-secondary-bg-color, #f4f4f5); }
-        body { font-family: Tahoma, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 70px; }
+        :root { --main: #2b95ff; --bg: var(--tg-theme-bg-color, #fff); --text: var(--tg-theme-text-color, #000); --sec: var(--tg-theme-secondary-bg-color, #f0f0f0); }
+        body { font-family: Tahoma, sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; padding-bottom: 80px; }
         
-        /* تب‌ها */
-        .tab-content { display: none; padding: 15px; }
-        .tab-content.active { display: block; }
+        /* صفحات (تب‌ها) */
+        .page { display: none; animation: fadeIn 0.3s; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* کارت‌ها */
-        .card { background: var(--sec-bg); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        h3 { margin-top: 0; color: var(--main-color); font-size: 16px; }
+        .card { background: var(--sec); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #eee; }
+        h3 { margin: 0 0 10px; font-size: 15px; color: var(--main); border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+
+        /* دکمه‌های بزرگ */
+        .big-btn { width: 100%; padding: 15px; margin-bottom: 10px; border: none; border-radius: 10px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: var(--text); }
+        .big-btn i { font-size: 20px; color: var(--main); }
 
         /* فرم‌ها */
-        label { display: block; margin: 10px 0 5px; font-size: 12px; color: var(--tg-theme-hint-color, #888); }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: var(--bg); color: var(--text); box-sizing: border-box; outline: none; }
+        label { display: block; margin: 10px 0 5px; font-size: 12px; color: #888; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; background: var(--bg); color: var(--text); box-sizing: border-box; }
+
+        /* دکمه لوکیشن */
+        .loc-btn { width: 100%; padding: 12px; background: #00a65a; color: white; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         
-        /* دکمه‌های دسته بندی */
-        .cat-row { display: flex; gap: 10px; margin-bottom: 15px; }
-        .cat-btn { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; text-align: center; cursor: pointer; background: var(--bg); }
-        .cat-btn.active { border-color: var(--main-color); background: rgba(51, 144, 236, 0.1); color: var(--main-color); font-weight: bold; }
+        /* دکمه اصلی */
+        .submit-btn { width: 100%; padding: 15px; background: var(--main); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; margin-top: 10px; }
 
         .hidden { display: none; }
-        .submit-btn { width: 100%; padding: 14px; background: var(--main-color); color: white; border: none; border-radius: 10px; font-size: 16px; margin-top: 15px; }
-
-        /* نوار پایین */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--bg); border-top: 1px solid #ddd; display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
-        .nav-item { text-align: center; font-size: 10px; color: #aaa; cursor: pointer; }
-        .nav-item.active { color: var(--main-color); }
-        .nav-item i { font-size: 20px; margin-bottom: 4px; }
     </style>
 </head>
 <body>
 
-    <div id="tab-home" class="tab-content active">
-        <div class="card" style="text-align: center; padding: 30px;">
-            <i class="fa fa-shopping-bag" style="font-size: 40px; color: #ddd;"></i>
-            <p>برای مشاهده آگهی‌های آنلاین، لطفا از دکمه‌های ربات استفاده کنید.</p>
-            <small style="color: #888;">(نسخه وب‌اپ آفلاین است)</small>
+    <div id="page-home" class="page active">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2>🛍 بازارچه آنلاین</h2>
+            <p style="font-size: 12px; color: #888;">خرید و فروش در ایران و افغانستان</p>
         </div>
+
+        <h3>🔍 مشاهده آگهی‌ها</h3>
+        <button class="big-btn" onclick="goToSearch('estate')">
+            <span>🏠 املاک</span> <i class="fa fa-chevron-left"></i>
+        </button>
+        <button class="big-btn" onclick="goToSearch('goods')">
+            <span>🛍 اجناس (نو/دست دوم)</span> <i class="fa fa-chevron-left"></i>
+        </button>
+
+        <h3 style="margin-top: 20px;">➕ ثبت آگهی</h3>
+        <button class="big-btn" style="background: #e3f2fd;" onclick="goToPost()">
+            <span>📝 ثبت آگهی جدید</span> <i class="fa fa-plus-circle"></i>
+        </button>
     </div>
 
-    <div id="tab-add" class="tab-content">
+    <div id="page-search-country" class="page">
+        <h3>🌍 در کدام کشور هستید؟</h3>
+        <button class="big-btn" onclick="doSearch('ایران')">🇮🇷 ایران</button>
+        <button class="big-btn" onclick="doSearch('افغانستان')">🇦🇫 افغانستان</button>
+        <button class="big-btn" style="background:none; box-shadow:none; color: #888;" onclick="showPage('page-home')">بازگشت</button>
+    </div>
+
+    <div id="page-post" class="page">
         <div class="card">
             <h3>📍 موقعیت مکانی</h3>
-            <label>استان / شهر:</label>
-            <input type="text" id="city" placeholder="مثلا: تهران، سعادت آباد">
+            <button class="loc-btn" type="button" onclick="getLocation()">
+                <i class="fa fa-map-marker-alt"></i> دریافت لوکیشن خودکار
+            </button>
+            <div id="loc-status" style="font-size: 11px; color: green; margin-bottom: 10px;"></div>
+
+            <label>کشور:</label>
+            <select id="addr-country">
+                <option value="ایران">🇮🇷 ایران</option>
+                <option value="افغانستان">🇦🇫 افغانستان</option>
+            </select>
+
+            <div style="display: flex; gap: 5px;">
+                <div style="flex:1"><label>استان/ولایت:</label><input type="text" id="addr-prov"></div>
+                <div style="flex:1"><label>شهر:</label><input type="text" id="addr-city"></div>
+            </div>
+            <label>محله:</label><input type="text" id="addr-dist">
+            <label>خیابان اصلی:</label><input type="text" id="addr-street">
+            <label>پلاک/شماره درب:</label><input type="text" id="addr-no">
         </div>
 
         <div class="card">
-            <h3>📂 دسته‌بندی</h3>
-            <div class="cat-row">
-                <div class="cat-btn active" onclick="selectCat('estate')" id="btn-estate">🏠 املاک</div>
-                <div class="cat-btn" onclick="selectCat('goods')" id="btn-goods">🛍 اجناس</div>
-            </div>
+            <h3>📂 مشخصات آگهی</h3>
+            <label>دسته‌بندی:</label>
+            <select id="cat-select" onchange="toggleForm(this.value)">
+                <option value="estate">🏠 املاک</option>
+                <option value="goods">🛍 اجناس</option>
+            </select>
 
             <div id="form-estate">
                 <label>نوع ملک:</label>
-                <select id="est-type">
-                    <option>آپارتمان</option><option>ویلایی</option><option>زمین</option><option>تجاری</option>
-                </select>
-                <div style="display:flex; gap:10px;">
-                    <div style="flex:1"><label>متراژ (متر):</label><input type="number" id="est-area"></div>
-                    <div style="flex:1"><label>سن بنا (سال):</label><input type="number" id="est-age"></div>
+                <select id="est-type"><option>آپارتمان</option><option>ویلایی</option><option>زمین</option></select>
+                <div style="display:flex; gap:5px;">
+                    <div style="flex:1"><label>متراژ:</label><input type="number" id="est-area"></div>
+                    <div style="flex:1"><label>سن بنا:</label><input type="number" id="est-age"></div>
                 </div>
             </div>
 
             <div id="form-goods" class="hidden">
                 <label>نوع کالا:</label>
-                <select id="g-type">
-                    <option>الکترونیکی</option><option>خودرو</option><option>خانگی</option><option>پوشاک</option>
-                </select>
+                <select id="g-type"><option>الکترونیکی</option><option>خانگی</option><option>خودرو</option></select>
                 <label>وضعیت:</label>
-                <select id="g-status">
-                    <option>نو (آکبند)</option><option>در حد نو</option><option>کارکرده</option>
-                </select>
+                <select id="g-status"><option>نو (صفر)</option><option>دست دوم</option></select>
             </div>
         </div>
 
         <div class="card">
-            <h3>📝 مشخصات کلی</h3>
-            <label>عنوان:</label><input type="text" id="title">
-            <label>قیمت (تومان):</label><input type="tel" id="price">
-            <label>توضیحات:</label><textarea id="desc" rows="3"></textarea>
+            <h3>📝 توضیحات نهایی</h3>
+            <label>عنوان آگهی:</label><input type="text" id="title">
+            <label>قیمت:</label><input type="tel" id="price">
+            <label>توضیحات:</label><textarea id="desc" rows="2"></textarea>
             
-            <div style="margin-top: 15px; padding: 10px; background: #eeffff; border-radius: 8px; font-size: 12px; color: #007777;">
-                📸 <b>توجه:</b> تصویر آگهی را در مرحله بعد (داخل ربات) ارسال خواهید کرد.
+            <div style="margin-top:15px; padding:10px; background:#e8f5e9; border-radius:8px; font-size:12px; color:#2e7d32;">
+                🖼 <b>تصویر آگهی:</b> جهت آپلود سریع‌تر، تصویر را در مرحله بعد (داخل ربات) ارسال خواهید کرد.
             </div>
         </div>
 
-        <button class="submit-btn" onclick="submitData()">تایید و رفتن به مرحله ارسال عکس</button>
+        <button class="submit-btn" onclick="submitAd()">تایید و ارسال عکس</button>
+        <button class="big-btn" style="background:none; box-shadow:none; color:#888; margin-top:10px;" onclick="showPage('page-home')">انصراف</button>
     </div>
-
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('home', this)">
-            <i class="fa fa-home"></i><br>خانه
-        </div>
-        <div class="nav-item" onclick="switchTab('add', this)">
-            <i class="fa fa-plus-circle"></i><br>ثبت آگهی
-        </div>
-    </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        let currentCat = 'estate';
 
-        function switchTab(tabName, el) {
-            document.querySelectorAll('.tab-content').forEach(d => d.classList.remove('active'));
-            document.getElementById('tab-' + tabName).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            el.classList.add('active');
+        let searchCategory = '';
+        let userLat = null;
+        let userLong = null;
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
         }
 
-        function selectCat(cat) {
-            currentCat = cat;
-            document.getElementById('btn-estate').classList.toggle('active', cat === 'estate');
-            document.getElementById('btn-goods').classList.toggle('active', cat === 'goods');
+        // --- بخش جستجو ---
+        function goToSearch(cat) {
+            searchCategory = cat;
+            showPage('page-search-country');
+        }
+
+        function doSearch(country) {
+            // ارسال درخواست جستجو به ربات
+            const data = {
+                action: "search_ads",
+                category: searchCategory,
+                country: country
+            };
+            tg.sendData(JSON.stringify(data));
+        }
+
+        // --- بخش ثبت آگهی ---
+        function goToPost() { showPage('page-post'); }
+
+        function toggleForm(cat) {
             document.getElementById('form-estate').classList.toggle('hidden', cat !== 'estate');
             document.getElementById('form-goods').classList.toggle('hidden', cat !== 'goods');
         }
 
-        function submitData() {
-            const city = document.getElementById('city').value;
+        function getLocation() {
+            if (navigator.geolocation) {
+                tg.MainButton.showProgress();
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    userLat = position.coords.latitude;
+                    userLong = position.coords.longitude;
+                    document.getElementById('loc-status').innerText = "✅ موقعیت شما دریافت شد";
+                    tg.MainButton.hideProgress();
+                }, function(error) {
+                    alert("خطا در دریافت لوکیشن: " + error.message);
+                    tg.MainButton.hideProgress();
+                });
+            } else {
+                alert("مرورگر شما از GPS پشتیبانی نمی‌کند.");
+            }
+        }
+
+        function submitAd() {
+            const country = document.getElementById('addr-country').value;
+            const prov = document.getElementById('addr-prov').value;
+            const city = document.getElementById('addr-city').value;
             const title = document.getElementById('title').value;
             const price = document.getElementById('price').value;
-            const desc = document.getElementById('desc').value;
-
+            
             if(!title || !price || !city) {
-                tg.showPopup({title: 'خطا', message: 'لطفا شهر، عنوان و قیمت را پر کنید'});
+                tg.showPopup({title: 'ناقص', message: 'لطفا فیلدهای شهر، عنوان و قیمت را پر کنید'});
                 return;
             }
 
-            let data = {
-                action: "new_post",
-                category: currentCat,
-                city: city,
-                title: title,
-                price: price,
-                description: desc,
-                details: {}
-            };
-
-            if(currentCat === 'estate') {
-                data.details = {
+            const cat = document.getElementById('cat-select').value;
+            let details = {};
+            if(cat === 'estate') {
+                details = { 
                     type: document.getElementById('est-type').value,
                     area: document.getElementById('est-area').value,
                     age: document.getElementById('est-age').value
                 };
             } else {
-                data.details = {
+                details = {
                     type: document.getElementById('g-type').value,
                     status: document.getElementById('g-status').value
                 };
             }
 
-            tg.sendData(JSON.stringify(data));
+            // جمع‌آوری تمام داده‌ها
+            const finalData = {
+                action: "new_post",
+                category: cat,
+                address: {
+                    country: country,
+                    province: prov,
+                    city: city,
+                    dist: document.getElementById('addr-dist').value,
+                    street: document.getElementById('addr-street').value,
+                    no: document.getElementById('addr-no').value,
+                    gps: { lat: userLat, long: userLong }
+                },
+                title: title,
+                price: price,
+                desc: document.getElementById('desc').value,
+                details: details
+            };
+
+            tg.sendData(JSON.stringify(finalData));
         }
     </script>
 </body>
