@@ -1,3 +1,133 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>بازارچه بین‌المللی</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --main: #2b95ff; --bg: var(--tg-theme-bg-color, #fff); --text: var(--tg-theme-text-color, #000); --sec: var(--tg-theme-secondary-bg-color, #f0f0f0); }
+        body { font-family: Tahoma, sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; padding-bottom: 80px; }
+        
+        /* صفحات (تب‌ها) */
+        .page { display: none; animation: fadeIn 0.3s; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* کارت‌ها */
+        .card { background: var(--sec); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #eee; }
+        h3 { margin: 0 0 10px; font-size: 15px; color: var(--main); border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+
+        /* دکمه‌های بزرگ */
+        .big-btn { width: 100%; padding: 15px; margin-bottom: 10px; border: none; border-radius: 10px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: var(--text); }
+        .big-btn i { font-size: 20px; color: var(--main); }
+
+        /* فرم‌ها */
+        label { display: block; margin: 10px 0 5px; font-size: 12px; color: #888; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; background: var(--bg); color: var(--text); box-sizing: border-box; }
+
+        /* دکمه لوکیشن */
+        .loc-btn { width: 100%; padding: 12px; background: #00a65a; color: white; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
+        /* دکمه اصلی */
+        .submit-btn { width: 100%; padding: 15px; background: var(--main); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; margin-top: 10px; }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="page-home" class="page active">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2>🛍 بازارچه آنلاین</h2>
+            <p style="font-size: 12px; color: #888;">خرید و فروش در ایران و افغانستان</p>
+        </div>
+
+        <h3>🔍 مشاهده آگهی‌ها</h3>
+        <button class="big-btn" onclick="goToSearch('estate')">
+            <span>🏠 املاک</span> <i class="fa fa-chevron-left"></i>
+        </button>
+        <button class="big-btn" onclick="goToSearch('goods')">
+            <span>🛍 اجناس (نو/دست دوم)</span> <i class="fa fa-chevron-left"></i>
+        </button>
+
+        <h3 style="margin-top: 20px;">➕ ثبت آگهی</h3>
+        <button class="big-btn" style="background: #e3f2fd;" onclick="goToPost()">
+            <span>📝 ثبت آگهی جدید</span> <i class="fa fa-plus-circle"></i>
+        </button>
+    </div>
+
+    <div id="page-search-country" class="page">
+        <h3>🌍 در کدام کشور هستید؟</h3>
+        <button class="big-btn" onclick="doSearch('ایران')">🇮🇷 ایران</button>
+        <button class="big-btn" onclick="doSearch('افغانستان')">🇦🇫 افغانستان</button>
+        <button class="big-btn" style="background:none; box-shadow:none; color: #888;" onclick="showPage('page-home')">بازگشت</button>
+    </div>
+
+    <div id="page-post" class="page">
+        <div class="card">
+            <h3>📍 موقعیت مکانی</h3>
+            <button class="loc-btn" type="button" onclick="getLocation()">
+                <i class="fa fa-map-marker-alt"></i> دریافت لوکیشن خودکار
+            </button>
+            <div id="loc-status" style="font-size: 11px; color: green; margin-bottom: 10px;"></div>
+
+            <label>کشور:</label>
+            <select id="addr-country">
+                <option value="ایران">🇮🇷 ایران</option>
+                <option value="افغانستان">🇦🇫 افغانستان</option>
+            </select>
+
+            <div style="display: flex; gap: 5px;">
+                <div style="flex:1"><label>استان/ولایت:</label><input type="text" id="addr-prov"></div>
+                <div style="flex:1"><label>شهر:</label><input type="text" id="addr-city"></div>
+            </div>
+            <label>محله:</label><input type="text" id="addr-dist">
+            <label>خیابان اصلی:</label><input type="text" id="addr-street">
+            <label>پلاک/شماره درب:</label><input type="text" id="addr-no">
+        </div>
+
+        <div class="card">
+            <h3>📂 مشخصات آگهی</h3>
+            <label>دسته‌بندی:</label>
+            <select id="cat-select" onchange="toggleForm(this.value)">
+                <option value="estate">🏠 املاک</option>
+                <option value="goods">🛍 اجناس</option>
+            </select>
+
+            <div id="form-estate">
+                <label>نوع ملک:</label>
+                <select id="est-type"><option>آپارتمان</option><option>ویلایی</option><option>زمین</option></select>
+                <div style="display:flex; gap:5px;">
+                    <div style="flex:1"><label>متراژ:</label><input type="number" id="est-area"></div>
+                    <div style="flex:1"><label>سن بنا:</label><input type="number" id="est-age"></div>
+                </div>
+            </div>
+
+            <div id="form-goods" class="hidden">
+                <label>نوع کالا:</label>
+                <select id="g-type"><option>الکترونیکی</option><option>خانگی</option><option>خودرو</option></select>
+                <label>وضعیت:</label>
+                <select id="g-status"><option>نو (صفر)</option><option>دست دوم</option></select>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📝 توضیحات نهایی</h3>
+            <label>عنوان آگهی:</label><input type="text" id="title">
+            <label>قیمت:</label><input type="tel" id="price">
+            <label>توضیحات:</label><textarea id="desc" rows="2"></textarea>
+            
+            <div style="margin-top:15px; padding:10px; background:#e8f5e9; border-radius:8px; font-size:12px; color:#2e7d32;">
+                🖼 <b>تصویر آگهی:</b> جهت آپلود سریع‌تر، تصویر را در مرحله بعد (داخل ربات) ارسال خواهید کرد.
+            </div>
+        </div>
+
+        <button class="submit-btn" onclick="submitAd()">تایید و ارسال عکس</button>
+        <button class="big-btn" style="background:none; box-shadow:none; color:#888; margin-top:10px;" onclick="showPage('page-home')">انصراف</button>
+    </div>
+
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
