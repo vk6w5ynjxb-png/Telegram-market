@@ -3,108 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بازارچه پیشرفته</title>
+    <title>بازارچه عیب‌یابی</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --main-color: #0088cc; --bg: var(--tg-theme-bg-color, #fff); --text: var(--tg-theme-text-color, #000); --sec-bg: var(--tg-theme-secondary-bg-color, #f0f0f0); }
-        body { font-family: Tahoma, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; }
-        
-        /* صفحات */
-        .page { display: none; padding: 15px; }
-        .page.active { display: block; }
-
-        /* استایل فرم ثبت آگهی */
-        .form-group { margin-bottom: 15px; }
-        .form-label { display: block; margin-bottom: 5px; font-size: 13px; color: var(--main-color); }
-        .form-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; background: var(--sec-bg); color: var(--text); box-sizing: border-box; }
-        .btn-submit { width: 100%; padding: 15px; background: var(--main-color); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; margin-top: 20px; }
-
-        /* کارت محصول */
-        .product-card { background: var(--bg); border: 1px solid #ddd; border-radius: 10px; margin-bottom: 10px; padding: 10px; display: flex; align-items: center; }
-        .p-img { width: 80px; height: 80px; background: #ddd; border-radius: 8px; object-fit: cover; margin-left: 10px; }
-        
-        /* نوار پایین */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--bg); border-top: 1px solid #ddd; display: flex; justify-content: space-around; padding: 10px 0; }
-        .nav-item { text-align: center; color: #888; font-size: 12px; }
-        .nav-item.active { color: var(--main-color); }
+        body { font-family: Tahoma, sans-serif; padding: 20px; background-color: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); }
+        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;}
+        button { width: 100%; padding: 15px; background-color: #0088cc; color: white; border: none; border-radius: 8px; font-size: 16px; margin-top: 10px; cursor: pointer; }
+        .error-log { color: red; font-size: 12px; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
 
-    <div id="homePage" class="page active">
-        <h3>🛒 تازه‌ترین آگهی‌ها</h3>
-        <div id="productList">
-            <div class="product-card">
-                <img src="https://picsum.photos/100" class="p-img">
-                <div>
-                    <h4>گوشی آیفون 13</h4>
-                    <p style="color:green">35,000,000 تومان</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <h3>📝 تست ثبت آگهی</h3>
+    
+    <label>عنوان:</label>
+    <input type="text" id="pTitle" placeholder="نام کالا">
+    
+    <label>قیمت:</label>
+    <input type="tel" id="pPrice" placeholder="قیمت">
+    
+    <label>توضیحات:</label>
+    <textarea id="pDesc" rows="3"></textarea>
 
-    <div id="addPage" class="page">
-        <h3>📝 ثبت آگهی جدید</h3>
-        <div class="form-group">
-            <label class="form-label">عنوان آگهی</label>
-            <input type="text" id="pTitle" class="form-input" placeholder="مثلا: دوچرخه کوهستان">
-        </div>
-        <div class="form-group">
-            <label class="form-label">قیمت (تومان)</label>
-            <input type="tel" id="pPrice" class="form-input" placeholder="مثلا: 2000000">
-        </div>
-        <div class="form-group">
-            <label class="form-label">توضیحات</label>
-            <textarea id="pDesc" class="form-input" rows="3"></textarea>
-        </div>
-        <button class="btn-submit" onclick="submitAd()">ارسال به ربات</button>
-    </div>
-
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="switchPage('homePage', this)">
-            <i class="fa fa-home fa-lg"></i><br>خانه
-        </div>
-        <div class="nav-item" onclick="switchPage('addPage', this)">
-            <i class="fa fa-plus-circle fa-lg"></i><br>ثبت آگهی
-        </div>
-    </nav>
+    <button onclick="debugAndSend()">ارسال به ربات (تست)</button>
+    
+    <div id="logArea" class="error-log"></div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
+        tg.expand(); // تمام صفحه کردن
 
-        function switchPage(pageId, element) {
-            // مخفی کردن همه صفحات
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            
-            // نمایش صفحه انتخاب شده
-            document.getElementById(pageId).classList.add('active');
-            element.classList.add('active');
+        function showLog(msg) {
+            const logArea = document.getElementById('logArea');
+            logArea.style.display = 'block';
+            logArea.innerText += msg + "\n";
         }
 
-        function submitAd() {
-            const title = document.getElementById('pTitle').value;
-            const price = document.getElementById('pPrice').value;
-            const desc = document.getElementById('pDesc').value;
+        function debugAndSend() {
+            try {
+                // 1. تست خواندن مقادیر
+                const title = document.getElementById('pTitle').value;
+                const price = document.getElementById('pPrice').value;
+                const desc = document.getElementById('pDesc').value;
 
-            if(!title || !price) {
-                tg.showPopup({title: 'خطا', message: 'لطفا عنوان و قیمت را وارد کنید'});
-                return;
+                if (!title || !price) {
+                    tg.showPopup({title: 'خطا', message: 'لطفا فیلدهای خالی را پر کنید'});
+                    return;
+                }
+
+                // 2. نمایش پیام تایید قبل از ارسال (برای اطمینان از کارکرد دکمه)
+                tg.showConfirm(`آیا مطمئنید؟\nارسال: ${title}`, function(ok) {
+                    if (ok) {
+                        // 3. ساخت داده نهایی
+                        const data = JSON.stringify({
+                            action: "new_post",
+                            title: title,
+                            price: price,
+                            description: desc
+                        });
+
+                        // 4. تلاش برای ارسال
+                        try {
+                            tg.sendData(data);
+                        } catch (err) {
+                            showLog("خطا در sendData: " + err);
+                            tg.showPopup({title: 'خطای ارسال', message: String(err)});
+                        }
+                    }
+                });
+
+            } catch (e) {
+                // اگر خطایی در کد جاوااسکریپت باشد اینجا نمایش داده می‌شود
+                showLog("خطای کلی: " + e);
+                tg.showPopup({title: 'خطای کدنویسی', message: String(e)});
             }
-
-            // ساخت یک بسته اطلاعاتی (JSON)
-            const data = {
-                action: "new_post",
-                title: title,
-                price: price,
-                desc: desc
-            };
-
-            // ارسال اطلاعات به ربات تلگرام
-            tg.sendData(JSON.stringify(data));
         }
     </script>
 </body>
