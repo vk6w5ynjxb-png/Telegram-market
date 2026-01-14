@@ -2,225 +2,64 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بازارچه تلگرام</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root {
-            --main-color: #0088cc;
-            --bg-color: var(--tg-theme-bg-color, #ffffff);
-            --text-color: var(--tg-theme-text-color, #222222);
-            --hint-color: var(--tg-theme-hint-color, #999999);
-            --secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f4);
+        body { font-family: sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; }
+        .item-card {
+            background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;
         }
-
-        body {
-            font-family: Tahoma, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 0;
-            padding-bottom: 70px;
+        .item-info h3 { margin: 0; font-size: 16px; color: #333; }
+        .item-info p { margin: 5px 0; font-size: 14px; color: #0088cc; font-weight: bold; }
+        .buy-btn {
+            background: #0088cc; color: white; border: none; padding: 8px 15px;
+            border-radius: 8px; cursor: pointer; font-size: 13px;
         }
-
-        /* بخش جستجو */
-        .search-container {
-            padding: 15px;
-            background: var(--bg-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .search-bar {
-            background: var(--secondary-bg);
-            border-radius: 10px;
-            padding: 10px;
-            display: flex;
-            align-items: center;
-        }
-        .search-bar input {
-            border: none;
-            background: transparent;
-            width: 100%;
-            margin-right: 10px;
-            color: var(--text-color);
-            outline: none;
-        }
-
-        /* دسته‌بندی‌ها */
-        .categories {
-            display: flex;
-            overflow-x: auto;
-            padding: 10px;
-            gap: 15px;
-            white-space: nowrap;
-        }
-        .cat-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 12px;
-            color: var(--hint-color);
-        }
-        .cat-icon {
-            width: 50px;
-            height: 50px;
-            background: var(--secondary-bg);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 5px;
-            font-size: 20px;
-            color: var(--main-color);
-        }
-
-        /* لیست محصولات */
-        .product-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            padding: 10px;
-        }
-        .product-card {
-            background: var(--bg-color);
-            border: 1px solid var(--secondary-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        .product-img {
-            width: 100%;
-            height: 120px;
-            background: #eee;
-            object-fit: cover;
-        }
-        .product-info {
-            padding: 10px;
-        }
-        .product-title {
-            font-size: 14px;
-            font-weight: bold;
-            height: 40px;
-            overflow: hidden;
-        }
-        .product-price {
-            color: var(--main-color);
-            margin-top: 10px;
-            font-size: 13px;
-        }
-
-        /* دکمه شناور */
-        .fab {
-            position: fixed;
-            bottom: 80px;
-            left: 20px;
-            width: 56px;
-            height: 56px;
-            background: var(--main-color);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            z-index: 1000;
-        }
-
-        /* نوار پایین */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background: var(--bg-color);
-            border-top: 1px solid var(--secondary-bg);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            z-index: 1000;
-        }
-        .nav-item {
-            text-align: center;
-            font-size: 11px;
-            color: var(--hint-color);
-        }
-        .nav-item.active {
-            color: var(--main-color);
+        .add-btn {
+            position: fixed; bottom: 20px; left: 20px; width: 50px; height: 50px;
+            background: #28a745; color: white; border-radius: 50%; border: none;
+            font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
 
-    <div class="search-container">
-        <div class="search-bar">
-            <i class="fa fa-search"></i>
-            <input type="text" placeholder="جستجو در بین کالاها...">
+    <h2 style="text-align: center; color: #444;">🛒 لیست کالاهای بازار</h2>
+
+    <div class="item-card">
+        <div class="item-info">
+            <h3>آیفون ۱۳ پرو</h3>
+            <p>۴۵,۰۰۰,۰۰۰ تومان</p>
         </div>
+        <button class="buy-btn" onclick="showMsg('آیفون ۱۳')">جزئیات</button>
     </div>
 
-    <div class="categories">
-        <div class="cat-item"><div class="cat-icon"><i class="fa fa-car"></i></div>خودرو</div>
-        <div class="cat-item"><div class="cat-icon"><i class="fa fa-home"></i></div>املاک</div>
-        <div class="cat-item"><div class="cat-icon"><i class="fa fa-mobile-alt"></i></div>دیجیتال</div>
-        <div class="cat-item"><div class="cat-icon"><i class="fa fa-tshirt"></i></div>پوشاک</div>
-        <div class="cat-item"><div class="cat-icon"><i class="fa fa-tools"></i></div>خدمات</div>
-    </div>
-
-    <div class="product-grid" id="productGrid">
+    <div class="item-card">
+        <div class="item-info">
+            <h3>ساعت هوشمند</h3>
+            <p>۹,۲۰۰,۰۰۰ تومان</p>
         </div>
-
-    <div class="fab" onclick="addNewPost()">
-        <i class="fa fa-plus fa-lg"></i>
+        <button class="buy-btn" onclick="showMsg('ساعت هوشمند')">جزئیات</button>
     </div>
 
-    <nav class="bottom-nav">
-        <div class="nav-item active"><i class="fa fa-home fa-lg"></i><br>خانه</div>
-        <div class="nav-item"><i class="fa fa-list fa-lg"></i><br>دسته بندی</div>
-        <div class="nav-item"><i class="fa fa-user fa-lg"></i><br>حساب من</div>
-    </nav>
+    <button class="add-btn" onclick="addNew()">+</button>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // داده‌های نمونه برای نمایش
-        const products = [
-            { title: "آیفون 13 پرو مکس", price: "45,000,000 تومان", img: "https://picsum.photos/200/201" },
-            { title: "ساعت هوشمند سامسونگ", price: "8,500,000 تومان", img: "https://picsum.photos/200/202" },
-            { title: "صندلی گیمینگ سری حرفه‌ای", price: "12,000,000 تومان", img: "https://picsum.photos/200/203" },
-            { title: "لپ‌تاپ ایسوس مدل 2023", price: "55,000,000 تومان", img: "https://picsum.photos/200/204" }
-        ];
-
-        const grid = document.getElementById('productGrid');
-        
-        products.forEach(p => {
-            const card = `
-                <div class="product-card" onclick="productClick('${p.title}')">
-                    <img src="${p.img}" class="product-img">
-                    <div class="product-info">
-                        <div class="product-title">${p.title}</div>
-                        <div class="product-price">${p.price}</div>
-                    </div>
-                </div>
-            `;
-            grid.innerHTML += card;
-        });
-
-        function productClick(title) {
+        function showMsg(name) {
             tg.showPopup({
-                title: 'جزئیات کالا',
-                message: `شما کالا "${title}" را انتخاب کردید.`,
-                buttons: [{type: 'ok'}]
+                title: 'انتخاب کالا',
+                message: 'آیا مایل به مشاهده جزئیات ' + name + ' هستید؟',
+                buttons: [{type: 'ok', text: 'بله'}, {type: 'cancel', text: 'خیر'}]
             });
         }
 
-        function addNewPost() {
-            tg.MainButton.setText("ثبت آگهی جدید").show();
-            tg.onEvent('mainButtonClicked', function(){
-                tg.sendData("کاربر قصد ثبت آگهی دارد");
-            });
+        function addNew() {
+            tg.showAlert("فرم ثبت آگهی به زودی در اینجا فعال می‌شود!");
         }
     </script>
 </body>
