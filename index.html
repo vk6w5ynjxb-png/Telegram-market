@@ -424,7 +424,7 @@
             tg.close();
         }
 
-        // --- آپلود عکس (با فیکس مشکل) ---
+        // --- تابع آپلود عکس با روش قدرتمند AJAX (جایگزین قبلی) ---
         function uploadImage(input) {
             const file = input.files[0];
             if(!file) return;
@@ -432,37 +432,66 @@
             const txt = document.getElementById('up-txt');
             const prog = document.getElementById('up-prog');
             const area = document.getElementById('up-area');
+            const errTxt = document.getElementById('err-img');
             
-            txt.innerText = "⏳ در حال آپلود... لطفا صبر کنید";
-            prog.style.width = "50%"; // شبیه‌سازی
+            // 1. آماده‌سازی
+            errTxt.style.display = 'none';
+            txt.innerText = "⏳ در حال ارسال...";
+            prog.style.width = "0%";
             
             const formData = new FormData();
             formData.append("image", file);
             
-            fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
-                method: "POST",
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    uploadedImgUrl = data.data.url;
-                    prog.style.width = "100%";
-                    txt.innerText = "";
-                    document.getElementById('up-prev').src = uploadedImgUrl;
-                    document.getElementById('up-prev').style.display = "block";
-                    area.classList.add('active');
-                } else {
-                    alert("خطا در آپلود: " + (data.error ? data.error.message : "نامشخص"));
-                    txt.innerText = "❌ خطا. دوباره تلاش کنید";
+            // 2. ساخت درخواست AJAX
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", `https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, true);
+            
+            // 3. نمایش درصد پیشرفت (واقعی)
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    prog.style.width = percentComplete + "%";
+                    txt.innerText = `⏳ در حال آپلود: ${Math.round(percentComplete)}%`;
                 }
-            })
-            .catch(e => {
-                alert("خطای شبکه در آپلود عکس");
-                txt.innerText = "❌ خطا";
-            });
-        }
+            };
 
+            // 4. وقتی پاسخ آمد
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data && data.success) {
+                            // موفقیت!
+                            uploadedImgUrl = data.data.url;
+                            prog.style.width = "100%";
+                            txt.innerText = "✅ عکس آماده شد!";
+                            document.getElementById('up-prev').src = uploadedImgUrl;
+                            document.getElementById('up-prev').style.display = "block";
+                            area.classList.add('active');
+                        } else {
+                            // سرور جواب داد ولی با ارور
+                            throw new Error(data.error ? data.error.message : "خطای نامشخص");
+                        }
+                    } catch (e) {
+                        alert("❌ خطا در خواندن پاسخ سرور:\n" + e.message);
+                        txt.innerText = "تلاش مجدد";
+                    }
+                } else {
+                    // خطای http (مثلا 400 یا 500)
+                    alert(`❌ خطا در ارتباط با سرور (کد ${xhr.status})`);
+                    txt.innerText = "تلاش مجدد";
+                }
+            };
+
+            // 5. وقتی شبکه قطع شد
+            xhr.onerror = function() {
+                alert("❌ خطای شبکه!\nاینترنت شما پاسخ سرور را دریافت نکرد.");
+                txt.innerText = "خطای شبکه";
+            };
+
+            // ارسال
+            xhr.send(formData);
+        }
         // --- فرم‌های پویا (بخش ۶ گانه) ---
         function updateForm() {
             const cat = document.getElementById('post-cat').value;
