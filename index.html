@@ -309,7 +309,11 @@
         const BIN_ID = "6967e3d043b1c97be930be0f"; 
         const MASTER_KEY = "$2a$10$qkOl1I02u1dd9Juv25BMv.IsrpbnJq2vYlA.XxkmrvcMdd6G/Iv8q";
 
-        const tg = window.Telegram.WebApp;
+        const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : {
+          showPopup: (opts)=>{ console.log('tg.showPopup mock', opts); alert(opts.title + '\n' + opts.message); },
+          sendData: (d)=>{ console.log('tg.sendData mock', d); },
+          close: ()=>{ console.log('tg.close mock'); },
+          expand: ()=>{}
         tg.expand();
 
         // متغیرها
