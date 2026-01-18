@@ -304,162 +304,310 @@
     </div>
 
     <script>
-        // 🔴🔴🔴 کلید ImgBB خود را اینجا بگذارید 🔴🔴🔴
+        // 🔴🔴🔴 کلیدهای شما (جایگذاری شود) 🔴🔴🔴
         const IMGBB_KEY = "YOUR_IMGBB_API_KEY"; 
-        
-        // کلیدهای دیتابیس (برای نمایش لیست)
         const BIN_ID = "YOUR_BIN_ID"; 
         const MASTER_KEY = "$2a$10$qkOl1I02u1dd9Juv25BMv.IsrpbnJq2vYlA.XxkmrvcMdd6G/Iv8q";
 
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // ✅ تعریف متغیر در بالاترین سطح (رفع خطای initialization)
+        // متغیرها
         let uploadedImgUrl = "";
         let adsCache = [];
+        let currentAd = null;
 
-        // --- مدیریت صفحات ---
-        function showPage(pageName) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        // --- مدیریت تب‌ها ---
+        function switchTab(tab) {
+            document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             
-            document.getElementById('page-' + pageName).classList.add('active');
-            const nav = document.getElementById('nav-' + pageName);
-            if(nav) nav.classList.add('active');
-
-            if(pageName === 'home') fetchAds();
+            document.getElementById(`page-${tab}`).classList.add('active');
+            if(document.getElementById(`nav-${tab}`)) document.getElementById(`nav-${tab}`).classList.add('active');
+            
+            if(tab === 'home') fetchAds();
+            if(tab === 'profile') loadProfile();
+            window.scrollTo(0,0);
         }
 
-        // --- دریافت آگهی‌ها ---
+        // --- دریافت آگهی‌ها (خواندن از جیسون‌بین) ---
         async function fetchAds() {
-            const container = document.getElementById('home-ads-container');
+            const box = document.getElementById('home-ads-container');
             try {
                 const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
                     headers: {'X-Master-Key': MASTER_KEY}
                 });
                 const data = await res.json();
-                adsCache = data.record || [];
-                renderAds(adsCache);
+                adsCache = data.record;
+                renderAds(adsCache.slice(-20).reverse(), 'home-ads-container'); // 20 تای آخر
             } catch(e) {
-                console.error(e);
+                box.innerHTML = `<p style='text-align:center; color:red; padding:20px;'>خطا در اتصال: ${e.message}</p>`;
             }
         }
 
-        function renderAds(list) {
-            const container = document.getElementById('home-ads-container');
-            container.innerHTML = "";
-            if(!list.length) { container.innerHTML = "<p style='text-align:center; color:#999'>آگهی نیست</p>"; return; }
-            
-            list.reverse().forEach(ad => {
-                const img = ad.img || "https://via.placeholder.com/150";
-                container.innerHTML += `
-                <div class="ad-card">
+        function renderAds(list, containerId) {
+            const box = document.getElementById(containerId);
+            box.innerHTML = "";
+            if(!list || list.length === 0) {
+                box.innerHTML = "<p style='text-align:center; color:#999; margin-top:30px;'>هیچ آگهی یافت نشد.</p>";
+                return;
+            }
+            list.forEach(ad => {
+                const img = ad.img || "https://via.placeholder.com/150?text=No+Img";
+                const catName = getCatName(ad.cat);
+                box.innerHTML += `
+                <div class="ad-card" onclick='showDetail(${JSON.stringify(ad)})'>
                     <img src="${img}" class="ad-img">
                     <div class="ad-content">
                         <div class="ad-title">${ad.title}</div>
+                        <div class="ad-meta"><span>${catName}</span> | <span>${ad.city}</span></div>
                         <div class="ad-price">${parseInt(ad.price).toLocaleString()}</div>
                     </div>
                 </div>`;
             });
         }
 
-        function updateForm() {
-            const cat = document.getElementById('post-cat').value;
-            const box = document.getElementById('dyn-sec');
-            box.classList.remove('hidden');
-            box.innerHTML = ""; // فعلا خالی برای جلوگیری از شلوغی
+        function getCatName(code) {
+            const map = {'estate':'املاک','cars':'خودرو','digital':'دیجیتال','home':'خانه','parts':'ابزار','jobs':'کار'};
+            return map[code] || code;
         }
 
-        // --- 📸 تابع آپلود عکس (اصلاح شده) ---
+        function openCategory(cat) {
+            switchTab('list');
+            document.getElementById('list-title').innerText = getCatName(cat);
+            const filtered = adsCache.filter(a => a.cat === cat);
+            renderAds(filtered.reverse(), 'cat-ads-container');
+            // ذخیره کتگوری فعلی برای فیلتر
+            window.currentCatFilter = cat;
+        }
+
+        function applyFilters() {
+            const loc = document.getElementById('filter-loc').value;
+            const price = document.getElementById('filter-price').value;
+            let list = adsCache.filter(a => window.currentCatFilter ? a.cat === window.currentCatFilter : true);
+
+            if(loc !== 'all') list = list.filter(a => a.country === loc);
+            if(price === 'low') list.sort((a,b) => a.price - b.price);
+            if(price === 'high') list.sort((a,b) => b.price - a.price);
+
+            renderAds(list, 'cat-ads-container');
+        }
+
+        // --- جزئیات و چت ---
+        function showDetail(ad) {
+            currentAd = ad;
+            switchTab('detail');
+            document.getElementById('d-img').src = ad.img || "";
+            document.getElementById('d-title').innerText = ad.title;
+            document.getElementById('d-price').innerText = parseInt(ad.price).toLocaleString() + " تومان/افغانی";
+            document.getElementById('d-loc').innerText = `${ad.city} (${ad.country})`;
+            document.getElementById('d-cat').innerText = getCatName(ad.cat);
+            document.getElementById('d-desc').innerText = ad.desc;
+            
+            // نمایش ویژگی‌های داینامیک
+            const table = document.getElementById('d-details');
+            table.innerHTML = "";
+            if(ad.details) {
+                for(const [k, v] of Object.entries(ad.details)) {
+                    if(v && v !== "false") {
+                        // اگر چک باکس بود و ترو بود
+                        const valDisplay = (v === true || v === "true") ? "دارد ✅" : v;
+                        table.innerHTML += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:5px 0;"><span>${k}</span><span style="font-weight:bold;">${valDisplay}</span></div>`;
+                    }
+                }
+            }
+        }
+
+        function startChat() {
+            if(!currentAd) return;
+            tg.sendData(JSON.stringify({ action: "chat_request", ad_id: currentAd.id }));
+            tg.close();
+        }
+
+        // --- آپلود عکس (با فیکس مشکل) ---
         function uploadImage(input) {
             const file = input.files[0];
-            if (!file) return;
-
+            if(!file) return;
+            
             const txt = document.getElementById('up-txt');
             const prog = document.getElementById('up-prog');
             const area = document.getElementById('up-area');
-            const errImg = document.getElementById('err-img');
-
-            // ریست کردن وضعیت
-            errImg.style.display = 'none';
-            txt.innerText = "⏳ در حال آپلود... (لطفا صبر کنید)";
-            prog.style.width = "30%";
-            area.style.background = "#fff3e0"; // زرد شدن پس‌زمینه
-
+            
+            txt.innerText = "⏳ در حال آپلود... لطفا صبر کنید";
+            prog.style.width = "50%"; // شبیه‌سازی
+            
             const formData = new FormData();
             formData.append("image", file);
-
-            // ارسال درخواست
+            
             fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
                 method: "POST",
                 body: formData
             })
-            .then(response => {
-                if (!response.ok) throw new Error("خطای سرور: " + response.status);
-                return response.json();
-            })
+            .then(res => res.json())
             .then(data => {
-                if (data.success) {
-                    // ✅ موفقیت
+                if(data.success) {
                     uploadedImgUrl = data.data.url;
                     prog.style.width = "100%";
-                    txt.innerText = "✅ عکس بارگذاری شد";
+                    txt.innerText = "";
                     document.getElementById('up-prev').src = uploadedImgUrl;
-                    document.getElementById('up-prev').style.display = 'block';
-                    area.style.background = "#e8f5e9"; // سبز شدن
+                    document.getElementById('up-prev').style.display = "block";
+                    area.classList.add('active');
                 } else {
-                    throw new Error(data.error ? data.error.message : "خطای ناشناخته");
+                    alert("خطا در آپلود: " + (data.error ? data.error.message : "نامشخص"));
+                    txt.innerText = "❌ خطا. دوباره تلاش کنید";
                 }
             })
-            .catch(error => {
-                // ❌ شکست
-                prog.style.width = "0%";
-                area.style.background = "#ffebee"; // قرمز شدن
-                txt.innerText = "❌ آپلود نشد. دوباره بزنید";
-                errImg.innerText = "خطا: " + error.message;
-                errImg.style.display = 'block';
-                alert("مشکل در آپلود عکس:\n" + error.message + "\n\nاگر در ایران یا ترکیه هستید، ممکن است نیاز به VPN باشد.");
+            .catch(e => {
+                alert("خطای شبکه در آپلود عکس");
+                txt.innerText = "❌ خطا";
             });
         }
 
-        // --- ثبت نهایی ---
+        // --- فرم‌های پویا (بخش ۶ گانه) ---
+        function updateForm() {
+            const cat = document.getElementById('post-cat').value;
+            const box = document.getElementById('dyn-sec');
+            box.innerHTML = "";
+            box.classList.remove('hidden');
+
+            let html = "";
+            if(cat === 'estate') {
+                html = `
+                    <label>نوع ملک:</label><select id="f-type"><option>آپارتمان</option><option>ویلایی</option><option>زمین/کلنگی</option><option>تجاری/اداری</option></select>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <div style="flex:1;"><label>متراژ:</label><input type="number" id="f-area"></div>
+                        <div style="flex:1;"><label>اتاق:</label><input type="number" id="f-room"></div>
+                    </div>
+                    <label style="margin-top:10px;">امکانات:</label>
+                    <div class="amenities-grid">
+                        <label class="check-box"><input type="checkbox" id="f-parking"> پارکینگ</label>
+                        <label class="check-box"><input type="checkbox" id="f-elevator"> آسانسور</label>
+                        <label class="check-box"><input type="checkbox" id="f-warehouse"> انباری</label>
+                    </div>
+                `;
+            } else if(cat === 'cars') {
+                html = `
+                    <label>برند:</label><input type="text" id="f-brand" placeholder="مثلا پراید">
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <div style="flex:1;"><label>سال ساخت:</label><input type="number" id="f-year"></div>
+                        <div style="flex:1;"><label>کارکرد (KM):</label><input type="number" id="f-km"></div>
+                    </div>
+                    <label style="margin-top:10px;">وضعیت بدنه:</label><select id="f-body"><option>سالم / بی‌رنگ</option><option>تصادفی</option><option>دور رنگ</option></select>
+                `;
+            } else if(cat === 'digital' || cat === 'home' || cat === 'parts') {
+                html = `
+                    <label>وضعیت کالا:</label><select id="f-cond"><option>نو (آکبند)</option><option>در حد نو</option><option>کارکرده</option><option>نیاز به تعمیر</option></select>
+                    <label style="margin-top:10px;">نحوه فروش:</label><select id="f-sale"><option>تکی</option><option>عمده</option></select>
+                `;
+            } else if(cat === 'jobs') {
+                html = `
+                    <label>نوع آگهی:</label><select id="f-role"><option>کارفرما (استخدام می‌کنم)</option><option>کارجو (دنبال کارم)</option></select>
+                    <label style="margin-top:10px;">حوزه فعالیت:</label><input type="text" id="f-field" placeholder="مثلا بنایی، برنامه نویسی...">
+                `;
+            } else {
+                box.classList.add('hidden');
+            }
+            box.innerHTML = html;
+        }
+
+        // --- ارسال آگهی ---
         function submitAd() {
             const title = document.getElementById('post-title').value;
             const price = document.getElementById('post-price').value;
-
-            // اعتبارسنجی
-            if (!title || !price) {
-                tg.showPopup({title: 'خطا', message: 'لطفا عنوان و قیمت را بنویسید'});
+            const cat = document.getElementById('post-cat').value;
+            
+            if(!title || !price || !cat) {
+                tg.showPopup({title:'ناقص', message:'دسته‌بندی، عنوان و قیمت الزامی است.'});
                 return;
             }
-
-            // چک کردن عکس
-            if (!uploadedImgUrl) {
-                document.getElementById('err-img').innerText = "⚠️ لطفا ابتدا صبر کنید تا عکس آپلود شود (یا یک عکس انتخاب کنید)";
+            if(!uploadedImgUrl) {
                 document.getElementById('err-img').style.display = 'block';
-                // اسکرول به بالا تا کاربر خطا را ببیند
-                document.getElementById('page-add').scrollTo(0,0);
                 return;
             }
 
-            const data = {
-                action: "new_post_full", // اکشن کامل
-                cat: document.getElementById('post-cat').value,
+            // جمع‌آوری دیتای پویا
+            let dets = {};
+            if(cat === 'estate') {
+                dets = {
+                    'نوع': document.getElementById('f-type').value,
+                    'متراژ': document.getElementById('f-area').value,
+                    'اتاق': document.getElementById('f-room').value,
+                    'پارکینگ': document.getElementById('f-parking').checked,
+                    'آسانسور': document.getElementById('f-elevator').checked,
+                    'انباری': document.getElementById('f-warehouse').checked
+                };
+            } else if(cat === 'cars') {
+                dets = {'برند':document.getElementById('f-brand').value, 'سال':document.getElementById('f-year').value, 'کارکرد':document.getElementById('f-km').value, 'بدنه':document.getElementById('f-body').value};
+            } else if(['digital','home','parts'].includes(cat)) {
+                dets = {'وضعیت':document.getElementById('f-cond').value, 'فروش':document.getElementById('f-sale').value};
+            } else if(cat === 'jobs') {
+                dets = {'نقش':document.getElementById('f-role').value, 'حوزه':document.getElementById('f-field').value};
+            }
+            
+            if(document.getElementById('post-exchange').checked) dets['معاوضه'] = true;
+
+            const payload = {
+                action: "new_post_full",
+                cat: cat,
                 title: title,
                 price: price,
                 country: document.getElementById('post-country').value,
                 city: document.getElementById('post-city').value,
                 desc: document.getElementById('post-desc').value,
-                image_url: uploadedImgUrl, // لینک عکس آپلود شده
-                details: {},
-                gps: {lat: 0, long: 0}
+                image_url: uploadedImgUrl,
+                details: dets,
+                gps: {lat:0, long:0}
             };
 
-            tg.sendData(JSON.stringify(data));
+            tg.sendData(JSON.stringify(payload));
+        }
+
+        // --- پروفایل و ثبت نام (فیکس شده) ---
+        function saveProfile() {
+            const name = document.getElementById('prof-name').value;
+            const phone = document.getElementById('prof-phone').value;
+            
+            if(!name || !phone) {
+                alert("نام و شماره موبایل الزامی است.");
+                return;
+            }
+
+            const userData = {
+                name: name,
+                phone: phone,
+                addr: document.getElementById('prof-addr').value,
+                email: document.getElementById('prof-email').value,
+                verified: false
+            };
+            
+            // ذخیره در حافظه گوشی کاربر
+            localStorage.setItem('my_profile', JSON.stringify(userData));
+            
+            alert("✅ اطلاعات با موفقیت ذخیره شد.");
+            loadProfile(); // رفرش نمایش
+        }
+
+        function loadProfile() {
+            const saved = localStorage.getItem('my_profile');
+            if(saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('prof-name').value = data.name;
+                document.getElementById('prof-phone').value = data.phone;
+                document.getElementById('prof-addr').value = data.addr;
+                document.getElementById('prof-email').value = data.email;
+                
+                document.getElementById('prof-name-disp').innerText = data.name;
+                // اگر قبلا ذخیره کرده، بج نشان داده نشود یا تغییر کند (فعلا ساده)
+                if(data.name) {
+                     document.getElementById('badge-area').innerHTML = '<i class="fa fa-check-circle" style="color:green"></i> پروفایل تکمیل شده';
+                }
+            }
         }
         
-        // شروع
+        // استارت اولیه
         fetchAds();
+        loadProfile();
+
     </script>
 </body>
 </html>
