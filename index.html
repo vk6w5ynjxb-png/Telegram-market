@@ -61,6 +61,14 @@
         .upload-area.active { border-color: var(--success); background: #e8f5e9; }
         .upload-preview { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; display: none; margin-top: 10px; }
         .upload-progress { height: 4px; background: var(--success); width: 0%; transition: 0.3s; position: absolute; bottom: 0; left: 0; }
+        
+        /* پیشنمایش چند عکسی */
+        .upload-previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 10px; }
+        .preview-item { position: relative; width: 100%; padding-bottom: 100%; border-radius: 8px; overflow: hidden; background: #f0f0f0; }
+        .preview-item img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .preview-item .progress-bar { position: absolute; bottom: 0; left: 0; height: 4px; background: var(--success); width: 0%; transition: width 0.3s; }
+        .preview-item .remove-btn { position: absolute; top: 5px; right: 5px; width: 20px; height: 20px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; }
+        .preview-item .status-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; }
 
         /* دکمه‌ها */
         .btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 10px rgba(183, 28, 28, 0.3); }
@@ -212,15 +220,18 @@
         </div>
 
         <div class="form-section">
-            <label>۲. تصویر آگهی (اجباری):</label>
+            <label>۲. تصویر آگهی (اجباری - حداکثر ۸ عکس):</label>
+            <!-- BEGIN multi-image upload block -->
             <div class="upload-area" id="up-area" onclick="document.getElementById('file-in').click()">
                 <i class="fa fa-cloud-upload-alt" style="font-size:30px; color:#aaa;"></i>
-                <p id="up-txt" style="margin:5px 0;">برای انتخاب عکس ضربه بزنید</p>
-                <div class="upload-progress" id="up-prog"></div>
+                <p id="up-txt" style="margin:5px 0;">برای انتخاب عکس(ها) ضربه بزنید</p>
+                <div id="up-previews" class="upload-previews"></div>
+                <div class="upload-progress" id="up-prog" style="display:none;"></div>
                 <img id="up-prev" class="upload-preview">
             </div>
-            <input type="file" id="file-in" hidden accept="image/*" onchange="uploadImage(this)">
+            <input type="file" id="file-in" hidden accept="image/*" multiple onchange="uploadImages(this)">
             <p class="error-txt" id="err-img">لطفا یک عکس آپلود کنید.</p>
+            <!-- END multi-image upload block -->
         </div>
 
         <div class="form-section hidden" id="dyn-sec">
@@ -324,7 +335,7 @@
             };
 
         // متغیرها
-        let uploadedImgUrl = "";
+        let uploadedImgUrls = []; // آرایه برای ذخیره آدرس‌های تصاویر آپلود شده
         let adsCache = [];
         let currentAd = null;
 
@@ -435,43 +446,136 @@
             tg.close();
         }
 
-        // --- آپلود عکس (با فیکس مشکل) ---
-        function uploadImage(input) {
-            const file = input.files[0];
-            if(!file) return;
+        // --- آپلود چند عکس (حداکثر 8 عکس) ---
+        function uploadImages(input) {
+            const files = Array.from(input.files);
+            if(files.length === 0) return;
+            
+            // محدودیت 8 عکس
+            if(files.length > 8) {
+                tg.showPopup({title:'توجه', message:'حداکثر 8 عکس می‌توانید آپلود کنید.'});
+                return;
+            }
             
             const txt = document.getElementById('up-txt');
-            const prog = document.getElementById('up-prog');
+            const previewsContainer = document.getElementById('up-previews');
             const area = document.getElementById('up-area');
             
-            txt.innerText = "⏳ در حال آپلود... لطفا صبر کنید";
-            prog.style.width = "50%"; // شبیه‌سازی
+            // پاک کردن آپلودهای قبلی
+            uploadedImgUrls = [];
+            previewsContainer.innerHTML = '';
+            document.getElementById('up-prev').style.display = 'none';
+            document.getElementById('err-img').style.display = 'none';
             
+            txt.innerText = `⏳ در حال آپلود ${files.length} عکس...`;
+            area.classList.add('active');
+            
+            // آپلود هر فایل
+            files.forEach((file, index) => {
+                uploadSingleFile(file, index, previewsContainer);
+            });
+        }
+        
+        function uploadSingleFile(file, index, container) {
+            // ایجاد المنت پیشنمایش
+            const previewItem = document.createElement('div');
+            previewItem.className = 'preview-item';
+            previewItem.id = `preview-${index}`;
+            
+            const img = document.createElement('img');
+            const progressBar = document.createElement('div');
+            progressBar.className = 'progress-bar';
+            
+            // پیشنمایش تصویر محلی
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            
+            previewItem.appendChild(img);
+            previewItem.appendChild(progressBar);
+            container.appendChild(previewItem);
+            
+            // آپلود با XMLHttpRequest برای نمایش پیشرفت
             const formData = new FormData();
             formData.append("image", file);
             
-            fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
-                method: "POST",
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    uploadedImgUrl = data.data.url;
-                    prog.style.width = "100%";
-                    txt.innerText = "";
-                    document.getElementById('up-prev').src = uploadedImgUrl;
-                    document.getElementById('up-prev').style.display = "block";
-                    area.classList.add('active');
-                } else {
-                    alert("خطا در آپلود: " + (data.error ? data.error.message : "نامشخص"));
-                    txt.innerText = "❌ خطا. دوباره تلاش کنید";
+            const xhr = new XMLHttpRequest();
+            
+            // رویداد پیشرفت آپلود
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressBar.style.width = percentComplete + '%';
+                    console.log(`آپلود تصویر ${index + 1}: ${percentComplete.toFixed(1)}%`);
                 }
-            })
-            .catch(e => {
-                alert("خطای شبکه در آپلود عکس");
-                txt.innerText = "❌ خطا";
             });
+            
+            // رویداد اتمام آپلود
+            xhr.addEventListener('load', () => {
+                try {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        console.log(`پاسخ آپلود تصویر ${index + 1}:`, response);
+                        
+                        if(response.success && response.data && response.data.url) {
+                            uploadedImgUrls.push(response.data.url);
+                            progressBar.style.width = '100%';
+                            progressBar.style.background = 'var(--success)';
+                            
+                            // نمایش آیکون موفقیت
+                            const successIcon = document.createElement('div');
+                            successIcon.className = 'status-icon';
+                            successIcon.innerHTML = '<i class="fa fa-check-circle" style="color:var(--success)"></i>';
+                            previewItem.appendChild(successIcon);
+                            setTimeout(() => successIcon.remove(), 2000);
+                            
+                            // بررسی اتمام همه آپلودها
+                            checkAllUploadsComplete();
+                        } else {
+                            handleUploadError(previewItem, progressBar, `خطا در آپلود: ${response.error ? response.error.message : 'نامشخص'}`);
+                        }
+                    } else {
+                        handleUploadError(previewItem, progressBar, `خطای شبکه: ${xhr.status}`);
+                    }
+                } catch(e) {
+                    console.error('خطا در پارس پاسخ:', e);
+                    handleUploadError(previewItem, progressBar, 'خطا در پردازش پاسخ سرور');
+                }
+            });
+            
+            // رویداد خطا
+            xhr.addEventListener('error', () => {
+                console.error(`خطای شبکه در آپلود تصویر ${index + 1}`);
+                handleUploadError(previewItem, progressBar, 'خطای شبکه در اتصال');
+            });
+            
+            xhr.open('POST', `https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`);
+            xhr.send(formData);
+        }
+        
+        function handleUploadError(previewItem, progressBar, errorMessage) {
+            console.error(errorMessage);
+            progressBar.style.width = '100%';
+            progressBar.style.background = '#f44336';
+            
+            const errorIcon = document.createElement('div');
+            errorIcon.className = 'status-icon';
+            errorIcon.innerHTML = '<i class="fa fa-exclamation-circle" style="color:#f44336"></i>';
+            previewItem.appendChild(errorIcon);
+        }
+        
+        function checkAllUploadsComplete() {
+            const txt = document.getElementById('up-txt');
+            const totalPreviews = document.querySelectorAll('.preview-item').length;
+            
+            if(uploadedImgUrls.length === totalPreviews) {
+                txt.innerText = `✅ ${uploadedImgUrls.length} عکس با موفقیت آپلود شد`;
+                console.log('تمام تصاویر آپلود شدند:', uploadedImgUrls);
+            } else if(uploadedImgUrls.length > 0) {
+                txt.innerText = `⚠️ ${uploadedImgUrls.length} از ${totalPreviews} عکس آپلود شد`;
+            }
         }
 
         // --- فرم‌های پویا (بخش ۶ گانه) ---
@@ -531,7 +635,7 @@
                 tg.showPopup({title:'ناقص', message:'دسته‌بندی، عنوان و قیمت الزامی است.'});
                 return;
             }
-            if(!uploadedImgUrl) {
+            if(uploadedImgUrls.length === 0) {
                 document.getElementById('err-img').style.display = 'block';
                 return;
             }
@@ -565,11 +669,13 @@
                 country: document.getElementById('post-country').value,
                 city: document.getElementById('post-city').value,
                 desc: document.getElementById('post-desc').value,
-                image_url: uploadedImgUrl,
+                image_url: uploadedImgUrls[0], // اولین تصویر به عنوان تصویر اصلی
+                image_urls: uploadedImgUrls,   // تمام تصاویر
                 details: dets,
                 gps: {lat:0, long:0}
             };
 
+            console.log('ارسال آگهی با payload:', payload);
             tg.sendData(JSON.stringify(payload));
         }
 
