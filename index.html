@@ -448,7 +448,6 @@
 
         // --- آپلود چند عکس (حداکثر 8 عکس) ---
         const SUCCESS_ICON_DISPLAY_DURATION = 2000;
-        let totalFilesToUpload = 0;
         
         function uploadImages(input) {
             const files = Array.from(input.files);
@@ -473,16 +472,26 @@
             txt.innerText = `⏳ در حال آپلود ${files.length} عکس...`;
             area.classList.add('active');
             
-            // ذخیره تعداد کل فایل‌ها
-            totalFilesToUpload = files.length;
+            // آماده‌سازی آرایه با اسلات‌های خالی برای حفظ ترتیب
+            uploadedImgUrls = new Array(files.length);
+            
+            // شمارنده برای پیگیری تعداد آپلودهای کامل شده
+            let completedUploads = 0;
+            const totalFiles = files.length;
             
             // آپلود هر فایل
             files.forEach((file, index) => {
-                uploadSingleFile(file, index, previewsContainer);
+                uploadSingleFile(file, index, previewsContainer, (success, url) => {
+                    completedUploads++;
+                    if(success && url) {
+                        uploadedImgUrls[index] = url;
+                    }
+                    checkAllUploadsComplete(completedUploads, totalFiles);
+                });
             });
         }
         
-        function uploadSingleFile(file, index, container) {
+        function uploadSingleFile(file, index, container, callback) {
             // ایجاد المنت پیشنمایش
             const previewItem = document.createElement('div');
             previewItem.className = 'preview-item';
@@ -526,7 +535,6 @@
                         console.log(`پاسخ آپلود تصویر ${index + 1}:`, response);
                         
                         if(response.success && response.data && response.data.url) {
-                            uploadedImgUrls.push(response.data.url);
                             progressBar.style.width = '100%';
                             progressBar.style.background = 'var(--success)';
                             
@@ -537,17 +545,20 @@
                             previewItem.appendChild(successIcon);
                             setTimeout(() => successIcon.remove(), SUCCESS_ICON_DISPLAY_DURATION);
                             
-                            // بررسی اتمام همه آپلودها
-                            checkAllUploadsComplete();
+                            // فراخوانی callback با موفقیت
+                            callback(true, response.data.url);
                         } else {
                             handleUploadError(previewItem, progressBar, `خطا در آپلود: ${response.error ? response.error.message : 'نامشخص'}`);
+                            callback(false, null);
                         }
                     } else {
                         handleUploadError(previewItem, progressBar, `خطای شبکه: ${xhr.status}`);
+                        callback(false, null);
                     }
                 } catch(e) {
                     console.error('خطا در پارس پاسخ:', e);
                     handleUploadError(previewItem, progressBar, 'خطا در پردازش پاسخ سرور');
+                    callback(false, null);
                 }
             });
             
@@ -555,6 +566,7 @@
             xhr.addEventListener('error', () => {
                 console.error(`خطای شبکه در آپلود تصویر ${index + 1}`);
                 handleUploadError(previewItem, progressBar, 'خطای شبکه در اتصال');
+                callback(false, null);
             });
             
             xhr.open('POST', `https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`);
@@ -572,17 +584,30 @@
             previewItem.appendChild(errorIcon);
         }
         
-        function checkAllUploadsComplete() {
+        function checkAllUploadsComplete(completedCount, totalCount) {
             const txt = document.getElementById('up-txt');
             
-            if(uploadedImgUrls.length === totalFilesToUpload) {
-                txt.innerText = `✅ ${uploadedImgUrls.length} عکس با موفقیت آپلود شد`;
-                console.log('تمام تصاویر آپلود شدند:', uploadedImgUrls);
-            } else if(uploadedImgUrls.length > 0) {
-                txt.innerText = `⚠️ ${uploadedImgUrls.length} از ${totalFilesToUpload} عکس آپلود شد`;
-            } else if(totalFilesToUpload > 0) {
+            // فقط در صورتی که همه آپلودها کامل شده باشند، پیام نهایی را نمایش بده
+            if(completedCount < totalCount) {
+                return; // هنوز همه آپلودها کامل نشده‌اند
+            }
+            
+            // فیلتر کردن آرایه برای حذف مقادیر undefined (آپلودهای ناموفق)
+            const successfulUrls = uploadedImgUrls.filter(url => url !== undefined);
+            
+            // به‌روزرسانی آرایه با فقط URLهای موفق
+            uploadedImgUrls = successfulUrls;
+            
+            if(successfulUrls.length === totalCount) {
+                txt.innerText = `✅ ${successfulUrls.length} عکس با موفقیت آپلود شد`;
+                console.log('تمام تصاویر آپلود شدند:', successfulUrls);
+            } else if(successfulUrls.length > 0) {
+                txt.innerText = `⚠️ ${successfulUrls.length} از ${totalCount} عکس آپلود شد`;
+                console.log('برخی تصاویر آپلود نشدند. موفق:', successfulUrls);
+            } else {
                 // همه آپلودها شکست خوردند
                 txt.innerText = `❌ خطا در آپلود تصاویر. دوباره تلاش کنید`;
+                console.error('هیچ تصویری با موفقیت آپلود نشد');
             }
         }
 
