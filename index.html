@@ -447,6 +447,9 @@
         }
 
         // --- آپلود چند عکس (حداکثر 8 عکس) ---
+        const SUCCESS_ICON_DISPLAY_DURATION = 2000;
+        let totalFilesToUpload = 0;
+        
         function uploadImages(input) {
             const files = Array.from(input.files);
             if(files.length === 0) return;
@@ -463,12 +466,15 @@
             
             // پاک کردن آپلودهای قبلی
             uploadedImgUrls = [];
-            previewsContainer.innerHTML = '';
+            previewsContainer.replaceChildren();
             document.getElementById('up-prev').style.display = 'none';
             document.getElementById('err-img').style.display = 'none';
             
             txt.innerText = `⏳ در حال آپلود ${files.length} عکس...`;
             area.classList.add('active');
+            
+            // ذخیره تعداد کل فایل‌ها
+            totalFilesToUpload = files.length;
             
             // آپلود هر فایل
             files.forEach((file, index) => {
@@ -529,7 +535,7 @@
                             successIcon.className = 'status-icon';
                             successIcon.innerHTML = '<i class="fa fa-check-circle" style="color:var(--success)"></i>';
                             previewItem.appendChild(successIcon);
-                            setTimeout(() => successIcon.remove(), 2000);
+                            setTimeout(() => successIcon.remove(), SUCCESS_ICON_DISPLAY_DURATION);
                             
                             // بررسی اتمام همه آپلودها
                             checkAllUploadsComplete();
@@ -568,13 +574,15 @@
         
         function checkAllUploadsComplete() {
             const txt = document.getElementById('up-txt');
-            const totalPreviews = document.querySelectorAll('.preview-item').length;
             
-            if(uploadedImgUrls.length === totalPreviews) {
+            if(uploadedImgUrls.length === totalFilesToUpload) {
                 txt.innerText = `✅ ${uploadedImgUrls.length} عکس با موفقیت آپلود شد`;
                 console.log('تمام تصاویر آپلود شدند:', uploadedImgUrls);
             } else if(uploadedImgUrls.length > 0) {
-                txt.innerText = `⚠️ ${uploadedImgUrls.length} از ${totalPreviews} عکس آپلود شد`;
+                txt.innerText = `⚠️ ${uploadedImgUrls.length} از ${totalFilesToUpload} عکس آپلود شد`;
+            } else if(totalFilesToUpload > 0) {
+                // همه آپلودها شکست خوردند
+                txt.innerText = `❌ خطا در آپلود تصاویر. دوباره تلاش کنید`;
             }
         }
 
